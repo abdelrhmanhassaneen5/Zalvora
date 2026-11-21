@@ -1,0 +1,2953 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZALVORA — زالفورا</title>
+  <!-- Google Fonts: Cairo for crisp bold Arabic UI, Amiri for calligraphic ink -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,700&family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg-obsidian: #05070d;
+      --bg-panel: #0d121d;
+      --bg-card: #131927;
+      --crimson: #c81e32;
+      --parchment: #eae0c8;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-obsidian);
+      color: #e5e7eb;
+      margin: 0;
+      padding: 0 0 46px 0; /* space for fixed bottom breaking news ticker */
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        radial-gradient(circle at 12% 10%, rgba(200, 30, 50, 0.11), transparent 42%),
+        radial-gradient(circle at 88% 85%, rgba(30, 58, 138, 0.14), transparent 48%);
+    }
+
+    .font-ink {
+      font-family: 'Amiri', Georgia, serif;
+    }
+
+    /* Rain Canvas Overlay */
+    #rain-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0.38;
+    }
+
+    /* Fixed Bottom Breaking News Ticker (~45s slow, pauses on hover) */
+    .ticker-fixed {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 35;
+      background: linear-gradient(90deg, #160509, #2b0710, #160509);
+      border-top: 1px solid rgba(200, 30, 50, 0.65);
+      box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.8);
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .ticker-track {
+      display: inline-block;
+      padding-left: 100%;
+      animation: tickerMoveRTL 46s linear infinite;
+      will-change: transform;
+    }
+    .ticker-fixed:hover .ticker-track,
+    .ticker-fixed:active .ticker-track {
+      animation-play-state: paused;
+    }
+    @keyframes tickerMoveRTL {
+      0% { transform: translateX(-8%); }
+      100% { transform: translateX(102%); }
+    }
+
+    /* Interactive Stat Tooltips (Hover & Click) */
+    .stat-tip-wrap {
+      position: relative;
+      cursor: help;
+    }
+    .stat-tooltip {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 50%;
+      transform: translateX(50%) translateY(-4px);
+      width: 235px;
+      background: #0a0f1c;
+      border: 1px solid rgba(200, 30, 50, 0.75);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font-size: 11.5px;
+      line-height: 1.65;
+      color: #e2e8f0;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.9);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+      z-index: 80;
+      text-align: right;
+    }
+    .stat-tooltip::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      right: 50%;
+      transform: translateX(50%);
+      border-width: 6px;
+      border-style: solid;
+      border-color: transparent transparent rgba(200, 30, 50, 0.75) transparent;
+    }
+    .stat-tip-wrap:hover .stat-tooltip,
+    .stat-tip-wrap.tip-open .stat-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(50%) translateY(0);
+    }
+
+    /* Notebook Skins */
+    .skin-classic {
+      background: linear-gradient(145deg, #16161c 0%, #09090d 65%, #1c1917 100%);
+      border: 2px solid #302c28;
+    }
+    .skin-crimson {
+      background: linear-gradient(145deg, #420b15 0%, #1c050a 65%, #300810 100%);
+      border: 2px solid #991b1b;
+    }
+    .skin-golden {
+      background: linear-gradient(145deg, #2e240e 0%, #120e05 60%, #3d2e0f 100%);
+      border: 2px solid #d97706;
+      box-shadow: 0 0 30px rgba(217, 119, 6, 0.22);
+    }
+    .skin-vintage {
+      background: linear-gradient(145deg, #33271c 0%, #1d150e 65%, #2b1f15 100%);
+      border: 2px solid #785a3a;
+    }
+
+    /* Notebook Paper */
+    .notebook-paper {
+      background-color: var(--parchment);
+      background-image:
+        repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, rgba(120, 96, 65, 0.26) 35px),
+        radial-gradient(circle at center, rgba(255, 250, 235, 0.4), rgba(168, 140, 98, 0.28));
+      color: #1c1917;
+      box-shadow: inset 8px 0 18px rgba(0, 0, 0, 0.22), 0 8px 24px rgba(0, 0, 0, 0.5);
+      position: relative;
+      transition: background-color 0.4s ease, box-shadow 0.4s ease;
+    }
+    .notebook-paper.vintage-paper {
+      background-color: #dfd0b0;
+      background-image:
+        repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, rgba(101, 70, 38, 0.34) 35px),
+        radial-gradient(circle at center, rgba(240, 222, 185, 0.3), rgba(130, 95, 55, 0.38));
+    }
+    .notebook-paper.uv-mode {
+      background-color: #110c24;
+      background-image:
+        repeating-linear-gradient(to bottom, transparent 0px, transparent 34px, rgba(139, 92, 246, 0.28) 35px),
+        radial-gradient(circle at center, rgba(139, 92, 246, 0.24), rgba(11, 7, 28, 0.94));
+      color: #c4b5fd;
+      box-shadow: inset 0 0 38px rgba(124, 58, 237, 0.6), 0 0 28px rgba(124, 58, 237, 0.4);
+    }
+
+    /* Realistic Hand Writing Animation (Right-to-Left) */
+    #writing-hand-svg {
+      position: absolute;
+      top: -16px;
+      right: 14%;
+      width: 165px;
+      height: 150px;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 20;
+      filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.45));
+      transform-origin: 20% 85%;
+    }
+    .hand-writing-active {
+      animation: handWriteRTL 2.45s cubic-bezier(0.35, 0.05, 0.25, 1) forwards;
+    }
+    @keyframes handWriteRTL {
+      0%   { opacity: 0; transform: translate(65px, -22px) rotate(-6deg); }
+      10%  { opacity: 1; transform: translate(40px, 4px) rotate(-2deg); }
+      22%  { transform: translate(12px, -3px) rotate(3deg); }
+      35%  { transform: translate(-18px, 5px) rotate(-3deg); }
+      48%  { transform: translate(-52px, -4px) rotate(4deg); }
+      62%  { transform: translate(-88px, 6px) rotate(-2deg); }
+      76%  { transform: translate(-122px, -3px) rotate(3deg); }
+      88%  { opacity: 1; transform: translate(-152px, 2px) rotate(2deg); }
+      100% { opacity: 0; transform: translate(-178px, -26px) rotate(9deg); }
+    }
+
+    /* Progressive Ink Reveal synced with hand */
+    .ink-wipe-reveal {
+      animation: inkWipeRTL 2.2s linear forwards;
+    }
+    @keyframes inkWipeRTL {
+      0%   { clip-path: inset(0 0 0 100%); opacity: 0.7; }
+      12%  { clip-path: inset(0 0 0 92%); opacity: 1; }
+      100% { clip-path: inset(0 0 0 0%); opacity: 1; }
+    }
+
+    /* ECG Flatline Animation */
+    .ecg-path {
+      stroke-dasharray: 420;
+      stroke-dashoffset: 420;
+      animation: drawECG 2.8s ease-out forwards;
+    }
+    @keyframes drawECG {
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* Interrogation Red Flashing Border */
+    .interrogation-flash {
+      animation: redBorderPulse 1.1s infinite;
+    }
+    @keyframes redBorderPulse {
+      0%, 100% { box-shadow: inset 0 0 28px rgba(200, 30, 50, 0.45), 0 0 22px rgba(200, 30, 50, 0.35); border-color: #c81e32; }
+      50% { box-shadow: inset 0 0 65px rgba(239, 68, 68, 0.85), 0 0 42px rgba(239, 68, 68, 0.65); border-color: #ff4d63; }
+    }
+
+    /* Map Pin Pulse */
+    .map-pin-pulse {
+      animation: pinPulse 2s infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    @keyframes pinPulse {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.25); opacity: 0.45; }
+    }
+
+    /* Buttons */
+    .btn-crimson {
+      background: linear-gradient(135deg, #c81e32 0%, #8a1120 100%);
+      border: 1px solid rgba(255, 110, 130, 0.4);
+      box-shadow: 0 4px 16px rgba(200, 30, 50, 0.35);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+    }
+    .btn-crimson:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(200, 30, 50, 0.55);
+      filter: brightness(1.08);
+    }
+    .btn-crimson:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-dark {
+      background: linear-gradient(135deg, #182032 0%, #0f1421 100%);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      transition: all 0.16s ease;
+    }
+    .btn-dark:hover:not(:disabled) {
+      border-color: rgba(200, 30, 50, 0.65);
+      background: linear-gradient(135deg, #1f2940 0%, #141b2c 100%);
+    }
+    .btn-dark:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .tab-active {
+      background: linear-gradient(135deg, rgba(200, 30, 50, 0.28), rgba(200, 30, 50, 0.08)) !important;
+      border-color: #c81e32 !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 16px rgba(200, 30, 50, 0.3);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #090c14; }
+    ::-webkit-scrollbar-thumb { background: #2c3548; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #c81e32; }
+  </style>
+</head>
+<body>
+  <!-- Animated Rain Layer -->
+  <canvas id="rain-canvas"></canvas>
+
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="fixed top-4 left-4 z-[90] flex flex-col gap-2 max-w-xs sm:max-w-sm pointer-events-none"></div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: WELCOME / HOW-TO-PLAY                              -->
+  <!-- ========================================================= -->
+  <div id="welcome-modal" class="fixed inset-0 z-[75] hidden items-center justify-center bg-black/90 backdrop-blur-md p-3 sm:p-5 overflow-y-auto">
+    <div class="w-full max-w-2xl bg-[#0d121d] border border-red-800/75 rounded-3xl p-5 sm:p-7 shadow-2xl my-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-red-700 to-black border border-red-500/60 flex items-center justify-center font-black text-xl text-white shadow-lg">Z</div>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-black text-white">مرحباً بك في «ZALVORA — زالفورا»</h2>
+            <p class="text-xs text-red-400 font-bold">لعبة إثارة نفسية واستراتيجية بقرارات ونهايات متعددة</p>
+          </div>
+        </div>
+        <button id="welcome-close-btn" onclick="closeWelcomeModal()" class="hidden btn-dark px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300">✕ إغلاق</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-slate-200 mb-5">
+        <div class="bg-[#131a29] border border-slate-800 rounded-2xl p-3.5">
+          <div class="font-extrabold text-red-400 mb-1">✍️ 1. المفكرة وقاعدة الـ 40 ثانية</div>
+          <p class="text-slate-300 leading-relaxed">اختر القلم، الهدف، سبب الوفاة، شرط ما قبل الموت، وحجة الغياب. بعد الكتابة يبدأ عدّاد 40 ثانية حقيقي (مع زر تسريع ⏩) ثم بث أخبار عاجل!</p>
+        </div>
+        <div class="bg-[#131a29] border border-slate-800 rounded-2xl p-3.5">
+          <div class="font-extrabold text-sky-400 mb-1">🕵️ 2. كشف الأسماء المستعارة والحجج</div>
+          <p class="text-slate-300 leading-relaxed">بعض المجرمين معروفون بألقاب فقط (مثل «العقرب» و«الأستاذ» و«المقلّد»). استعن بلوكاس ومَايَا لكشف أسمائهم الحقيقية واجمع حجج الغياب.</p>
+        </div>
+        <div class="bg-[#131a29] border border-slate-800 rounded-2xl p-3.5">
+          <div class="font-extrabold text-amber-400 mb-1">🔐 3. الغرفة السرية والموبايل</div>
+          <p class="text-slate-300 leading-relaxed">طوّر غرفتك (4 مستويات) لفتح قلم الحبر السري UV ولوحة تحقيق سيرو. وتابع موبايل راين لمسح كاميرات المراقبة قبل كلارا!</p>
+        </div>
+        <div class="bg-[#131a29] border border-slate-800 rounded-2xl p-3.5">
+          <div class="font-extrabold text-emerald-400 mb-1">🚨 4. الاستجواب وعصر الحاكم الجديد</div>
+          <p class="text-slate-300 leading-relaxed">عند 100% شك تدخل الاستجواب وجهاز كشف الكذب (تثبيت النبض). وبعد أي نهاية يمكنك العودة أقوى في «عصر حاكم العالم الجديد» بلا نهاية!</p>
+        </div>
+      </div>
+
+      <div class="bg-red-950/35 border border-red-900/50 rounded-2xl p-3 text-xs text-slate-300 mb-5 flex items-center gap-2.5">
+        <span class="text-lg">💡</span>
+        <span>مرّر الماوس (أو اضغط) على أي مؤشر في الشريط العلوي لمعرفة وظيفته، ومرّر على شريط الأخبار السفلي لإيقافه وقراءته بهدوء.</span>
+      </div>
+
+      <button onclick="startFromWelcome()" class="btn-crimson w-full py-3.5 rounded-2xl font-black text-white text-base shadow-xl">
+        🌧️ ابدأ اللعبة الآن (تفعيل صوت المطر والمؤثرات)
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: GENERIC CONFIRM / DIALOG                           -->
+  <!-- ========================================================= -->
+  <div id="custom-modal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+    <div class="w-full max-w-md bg-[#0f1523] border border-red-800/60 rounded-3xl p-6 shadow-2xl">
+      <h3 id="modal-title" class="text-lg font-black text-white mb-2"></h3>
+      <p id="modal-body" class="text-sm text-slate-300 leading-relaxed mb-5"></p>
+      <div id="modal-actions" class="flex justify-end gap-2.5"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: SAVE / LOAD (3 SLOTS)                              -->
+  <!-- ========================================================= -->
+  <div id="save-modal" class="fixed inset-0 z-[72] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+    <div class="w-full max-w-lg bg-[#0d1320] border border-slate-700 rounded-3xl p-5 sm:p-6 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <h3 class="text-lg font-black text-white">💾 حفظ وتحميل التقدم (3 خانات)</h3>
+        <button onclick="closeOverlay('save-modal')" class="btn-dark px-3 py-1 rounded-lg text-xs font-bold text-slate-300">✕</button>
+      </div>
+      <div id="save-slots-list" class="flex flex-col gap-3"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL: ACHIEVEMENTS                                       -->
+  <!-- ========================================================= -->
+  <div id="achievements-modal" class="fixed inset-0 z-[72] hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="w-full max-w-2xl bg-[#0d1320] border border-amber-700/60 rounded-3xl p-5 sm:p-6 shadow-2xl my-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div>
+          <h3 class="text-lg font-black text-white">🏆 أوسمة وإنجازات زالفورا</h3>
+          <p id="ach-progress-text" class="text-xs text-amber-400 font-bold"></p>
+        </div>
+        <button onclick="closeOverlay('achievements-modal')" class="btn-dark px-3 py-1 rounded-lg text-xs font-bold text-slate-300">✕</button>
+      </div>
+      <div id="achievements-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[65vh] overflow-y-auto pl-1"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- OVERLAY: REAL 40-SECOND COUNTDOWN                         -->
+  <!-- ========================================================= -->
+  <div id="countdown-overlay" class="fixed inset-0 z-[70] hidden items-center justify-center bg-black/95 backdrop-blur-md p-4">
+    <div class="w-full max-w-md bg-[#0c0a10] border-2 border-red-800/80 rounded-3xl p-6 sm:p-8 text-center shadow-2xl">
+      <div class="text-xs font-black tracking-widest text-red-500 uppercase mb-2">⏳ جاري تنفيذ قاعدة المفكرة</div>
+      <h3 id="cd-target-name" class="font-ink text-3xl sm:text-4xl font-bold text-white mb-1"></h3>
+      <p id="cd-method-text" class="text-xs text-slate-400 mb-6"></p>
+
+      <!-- Circular Progress Ring -->
+      <div class="relative w-44 h-44 mx-auto mb-6 flex items-center justify-center">
+        <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="#1f2433" stroke-width="8" />
+          <circle id="cd-ring-progress" cx="60" cy="60" r="52" fill="none" stroke="#dc2626" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="0" style="transition: stroke-dashoffset 0.95s linear;" />
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span id="cd-seconds-num" class="text-5xl font-black text-red-500 tabular-nums">40</span>
+          <span class="text-xs font-bold text-slate-400">ثانية متبقية</span>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-400 mb-5">«دقات الساعة تقترب من الصفر... لا تراجع بعد جفاف الحبر.»</p>
+      <button onclick="fastForwardCountdown()" class="btn-dark w-full py-3 rounded-xl font-extrabold text-amber-300 text-sm border-amber-600/40 hover:border-amber-400">
+        ⏩ تسريع الوقت (الانتقال مباشرة لبث الأخبار)
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- OVERLAY: BREAKING NEWS TV BROADCAST                       -->
+  <!-- ========================================================= -->
+  <div id="tv-broadcast-overlay" class="fixed inset-0 z-[70] hidden items-center justify-center bg-black/92 backdrop-blur-md p-3 sm:p-5 overflow-y-auto">
+    <div class="w-full max-w-2xl bg-[#0b0f19] border-2 border-red-700 rounded-3xl overflow-hidden shadow-2xl my-auto">
+      <!-- TV Channel Header -->
+      <div class="bg-gradient-to-l from-red-800 via-red-700 to-red-900 px-5 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full bg-white animate-ping"></span>
+          <span class="font-black text-white text-sm sm:text-base">📺 قناة زالفورا الإخبارية — بث عاجل</span>
+        </div>
+        <span class="text-[11px] font-black bg-black/40 text-red-100 px-2.5 py-0.5 rounded">LIVE • مباشر</span>
+      </div>
+
+      <div class="p-5 sm:p-6 space-y-4">
+        <!-- Portrait + ECG Flatline -->
+        <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#070a12] border border-slate-800 rounded-2xl p-4">
+          <div id="tv-target-portrait" class="w-24 h-24 rounded-2xl overflow-hidden border-2 border-red-600/80 bg-black shrink-0"></div>
+          <div class="flex-1 w-full text-center sm:text-right">
+            <div class="text-xs font-extrabold text-red-400 mb-0.5">تأكيد الوفاة رسمياً</div>
+            <h3 id="tv-target-title" class="text-xl font-black text-white mb-2"></h3>
+            <!-- ECG Flatline SVG -->
+            <div class="bg-black/80 border border-red-950 rounded-xl px-3 py-2">
+              <svg viewBox="0 0 320 44" class="w-full h-9">
+                <path id="tv-ecg-path" class="ecg-path" d="M0 24 L45 24 L56 10 L65 36 L74 6 L84 32 L92 24 L135 24 L145 14 L153 32 L162 24 L320 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <div class="text-[10px] font-bold text-red-500 text-left tracking-widest">HEARTBEAT: 0 BPM — FLATLINE</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- News Headline & Details -->
+        <div class="bg-[#121826] border border-slate-800 rounded-2xl p-4 space-y-2 text-xs sm:text-sm">
+          <p id="tv-headline" class="font-extrabold text-white leading-relaxed"></p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-xs text-slate-300">
+            <div><span class="text-slate-400">سبب الوفاة:</span> <strong id="tv-cause" class="text-red-300"></strong></div>
+            <div><span class="text-slate-400">شرط ما قبل الموت:</span> <strong id="tv-condition" class="text-amber-300"></strong></div>
+          </div>
+        </div>
+
+        <!-- Stat Delta Pills -->
+        <div id="tv-stat-deltas" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+
+        <!-- Conscience Live Comment -->
+        <div class="bg-[#090d16] border-r-4 border-red-600 rounded-xl p-3.5 flex items-center gap-3">
+          <div id="tv-conscience-portrait" class="w-12 h-12 rounded-full overflow-hidden border border-red-500/60 shrink-0"></div>
+          <div>
+            <div class="text-[11px] font-black text-red-400 mb-0.5">تعليق «ضميري» على البث:</div>
+            <div id="tv-conscience-comment" class="text-xs sm:text-sm text-slate-200 leading-relaxed"></div>
+          </div>
+        </div>
+
+        <button onclick="closeTVBroadcast()" class="btn-crimson w-full py-3.5 rounded-2xl font-black text-white text-sm sm:text-base">
+          إغلاق التلفزيون والعودة للغرفة السرية ←
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- SCREEN 1: CINEMATIC INTRO (4 ILLUSTRATED SVG SCENES)      -->
+  <!-- ========================================================= -->
+  <section id="screen-intro" class="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
+    <div class="w-full max-w-3xl bg-[#0d121d]/95 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+      <div class="flex flex-wrap items-center justify-between gap-2 px-5 py-3.5 bg-[#080b13] border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
+          <span class="font-black tracking-wider text-lg text-white">ZALVORA <span class="text-red-500 font-bold text-sm">| زالفورا</span></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openWelcomeModal(true)" class="btn-dark px-2.5 py-1.5 rounded-lg text-xs font-extrabold text-amber-300" title="دليل اللعب">❓</button>
+          <button onclick="AudioEngine.toggleMute()" class="mute-toggle-btn btn-dark px-3 py-1.5 rounded-lg text-xs font-bold text-slate-200">🔊 الصوت</button>
+          <button onclick="skipIntro()" class="text-xs font-bold text-slate-300 hover:text-red-400 px-3 py-1.5 rounded-lg border border-slate-700 hover:border-red-700 transition">تخطي المقدمة ⏭</button>
+        </div>
+      </div>
+
+      <!-- Scene Artwork -->
+      <div id="intro-art" class="relative w-full h-60 sm:h-72 bg-[#05070c] overflow-hidden flex items-center justify-center border-b border-slate-800"></div>
+
+      <!-- Narration -->
+      <div class="p-5 sm:p-7">
+        <div class="flex items-center justify-between mb-3">
+          <span id="intro-badge" class="text-xs font-extrabold px-3 py-1 rounded-full bg-red-950/80 text-red-400 border border-red-800/50">المشهد 1 / 4</span>
+          <span id="intro-location" class="text-xs text-slate-400 font-bold">جامعة زالفورا — ليلة التخرج</span>
+        </div>
+
+        <p id="intro-text" class="text-base sm:text-xl font-bold leading-loose text-slate-100 min-h-[100px]"></p>
+
+        <!-- Conscience box on Scene 4 -->
+        <div id="intro-conscience-box" class="hidden mt-4 p-3.5 rounded-xl bg-slate-900/90 border-r-4 border-red-600 text-sm text-slate-200 flex items-center gap-3">
+          <div id="intro-conscience-portrait" class="w-12 h-12 rounded-full overflow-hidden border border-red-500/60 shrink-0"></div>
+          <div>
+            <span class="font-extrabold text-red-400 block mb-0.5">«ضميري»:</span>
+            <span id="intro-conscience-msg"></span>
+          </div>
+        </div>
+
+        <div id="intro-next-wrap" class="mt-5 flex justify-end">
+          <button onclick="nextIntroScene()" class="btn-crimson px-7 py-3 rounded-xl font-extrabold text-white text-sm sm:text-base">التالي ←</button>
+        </div>
+
+        <div id="intro-choices" class="hidden mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button onclick="finishIntro('test')" class="btn-crimson p-4 rounded-xl text-right">
+            <div class="font-extrabold text-white text-base">✍️ أجرّب المفكرة فوراً</div>
+            <div class="text-xs text-red-100/85 mt-1">أكتب اسم «فَالْكُون» لأختبر إن كانت القوة حقيقية (+10 نقاط، -5% إنسانية).</div>
+          </button>
+          <button onclick="finishIntro('cautious')" class="btn-dark p-4 rounded-xl text-right">
+            <div class="font-extrabold text-white text-base">🧠 أتفحصها بحذر أولاً</div>
+            <div class="text-xs text-slate-300 mt-1">أدرس القوانين وأجمع حجج غيابي قبل أي خطوة (+8 ذكاء وتمويه).</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= -->
+  <!-- SCREEN 2: MAIN GAME HUB (غرفة راين السرية)                -->
+  <!-- ========================================================= -->
+  <section id="screen-hub" class="hidden relative z-10 min-h-screen flex flex-col">
+
+    <!-- TOP HUD BAR -->
+    <header class="sticky top-0 z-30 bg-[#080b13]/95 backdrop-blur-md border-b border-slate-800/90">
+      <div class="max-w-7xl mx-auto px-3 sm:px-5 py-2.5">
+        <div class="flex flex-wrap items-center justify-between gap-2.5">
+
+          <!-- Brand & Rayen Portrait -->
+          <div class="flex items-center gap-2.5">
+            <div id="hud-rayn-portrait" class="w-11 h-11 rounded-xl border border-red-500/60 overflow-hidden bg-black shrink-0"></div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="font-black text-base sm:text-lg text-white leading-none">ZALVORA</h1>
+                <span id="hud-day-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-950/80 text-red-300 border border-red-800/60">اليوم 1</span>
+              </div>
+              <p id="hud-stage-label" class="text-[11px] text-slate-400 mt-0.5">راين كاليد — الغرفة السرية</p>
+            </div>
+          </div>
+
+          <!-- 5 Stats with Interactive Tooltips -->
+          <div class="flex flex-wrap items-center gap-2 flex-1 justify-center">
+            <!-- 1. Suspicion -->
+            <div class="stat-tip-wrap bg-[#111624] border border-slate-800 hover:border-red-500/60 rounded-xl px-2.5 py-1.5 min-w-[104px] flex-1 sm:flex-none transition" onclick="toggleStatTooltip(this)">
+              <div class="flex justify-between text-[11px] font-bold mb-1">
+                <span class="text-slate-300">🚨 الشك</span>
+                <span id="stat-susp-val" class="text-red-400">5%</span>
+              </div>
+              <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div id="stat-susp-bar" class="h-full bg-gradient-to-l from-red-600 to-orange-500 transition-all duration-500" style="width: 5%"></div>
+              </div>
+              <div class="stat-tooltip">
+                <strong class="text-red-400 block mb-1">🚨 مؤشر الشك (0% - 100%):</strong>
+                يزداد عند الكتابة بدون تمويه أو حجة غياب. عند <strong>100%</strong> يتم استدعاؤك لغرفة الاستجواب وجهاز كشف الكذب أمام سيرو فان!
+              </div>
+            </div>
+
+            <!-- 2. Humanity -->
+            <div class="stat-tip-wrap bg-[#111624] border border-slate-800 hover:border-sky-500/60 rounded-xl px-2.5 py-1.5 min-w-[104px] flex-1 sm:flex-none transition" onclick="toggleStatTooltip(this)">
+              <div class="flex justify-between text-[11px] font-bold mb-1">
+                <span class="text-slate-300">❤️ الإنسانية</span>
+                <span id="stat-hum-val" class="text-sky-400">85%</span>
+              </div>
+              <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div id="stat-hum-bar" class="h-full bg-gradient-to-l from-sky-400 to-indigo-500 transition-all duration-500" style="width: 85%"></div>
+              </div>
+              <div class="stat-tooltip">
+                <strong class="text-sky-400 block mb-1">❤️ مؤشر الإنسانية (0% - 100%):</strong>
+                يغير ملامح ونبرة «ضميري». الإنسانية العالية تتيح التوبة، والمنخفضة (≤40%) تفتح مهارة «البرود التام» في الاستجواب!
+              </div>
+            </div>
+
+            <!-- 3. Intellect -->
+            <div class="stat-tip-wrap bg-[#111624] border border-slate-800 hover:border-emerald-500/60 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition" onclick="toggleStatTooltip(this)">
+              <span class="text-sm">🧠</span>
+              <div>
+                <div class="text-[10px] text-slate-400 font-bold">الذكاء</div>
+                <div id="stat-int-val" class="text-xs font-extrabold text-emerald-400">20</div>
+              </div>
+              <div class="stat-tooltip">
+                <strong class="text-emerald-400 block mb-1">🧠 الذكاء والتمويه:</strong>
+                يفتح ردوداً قانونية قوية في الاستجواب (مثل «قلب الطاولة») وحجة غياب «قهوة مع المحقق سيرو» عند 45 ذكاء.
+              </div>
+            </div>
+
+            <!-- 4. Public Opinion -->
+            <div class="stat-tip-wrap bg-[#111624] border border-slate-800 hover:border-purple-500/60 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition" onclick="toggleStatTooltip(this)">
+              <span class="text-sm">⚖️</span>
+              <div>
+                <div class="text-[10px] text-slate-400 font-bold">رأي الشارع</div>
+                <div id="stat-pub-val" class="text-xs font-extrabold text-purple-300">منقذ (60)</div>
+              </div>
+              <div class="stat-tooltip">
+                <strong class="text-purple-300 block mb-1">⚖️ رأي الشارع (منقذ ↔ طاغية):</strong>
+                إذا رآك الناس منقذاً (≥60) يتعاونون معك ويقل الشك؛ وإذا رآك الناس طاغية (&lt;35) تشتد ملاحقة الشرطة لك!
+              </div>
+            </div>
+
+            <!-- 5. Points -->
+            <div class="stat-tip-wrap bg-[#111624] border border-slate-800 hover:border-amber-500/60 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition" onclick="toggleStatTooltip(this)">
+              <span class="text-sm">👁️</span>
+              <div>
+                <div class="text-[10px] text-slate-400 font-bold">النقاط</div>
+                <div id="stat-pts-val" class="text-xs font-extrabold text-amber-400">40</div>
+              </div>
+              <div class="stat-tooltip">
+                <strong class="text-amber-400 block mb-1">👁️ نقاط النفوذ:</strong>
+                تُستخدم لتطوير غرفتك السرية (4 مستويات)، فتح مظاهر المفكرة، وتجنيد شبكة الأتباع في عصر الحاكم الجديد.
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex items-center gap-1.5">
+            <button onclick="openSaveModal()" class="btn-dark px-2.5 py-2 rounded-xl text-xs font-bold text-sky-300" title="حفظ / تحميل (3 خانات)">💾</button>
+            <button onclick="openAchievementsModal()" class="btn-dark px-2.5 py-2 rounded-xl text-xs font-bold text-amber-300" title="الإنجازات">🏆</button>
+            <button onclick="AudioEngine.toggleMute()" class="mute-toggle-btn btn-dark px-2.5 py-2 rounded-xl text-xs font-bold text-slate-200" title="الصوت والمطر">🔊</button>
+            <button onclick="openWelcomeModal(true)" class="btn-dark px-2.5 py-2 rounded-xl text-xs font-extrabold text-emerald-300" title="دليل اللعب">❓</button>
+            <button onclick="confirmResetGame()" class="btn-dark px-2.5 py-2 rounded-xl text-xs font-bold text-red-400" title="إعادة اللعبة">🔄</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN BODY GRID -->
+    <main class="max-w-7xl w-full mx-auto px-3 sm:px-5 py-4 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+      <!-- LEFT SIDEBAR: Conscience + Alibis + Directive -->
+      <aside class="lg:col-span-4 flex flex-col gap-3.5">
+
+        <!-- Conscience Card («ضميري») -->
+        <div id="conscience-card" class="bg-[#0f1523] border border-slate-800 rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="flex items-center gap-3">
+              <div id="conscience-portrait" class="w-14 h-14 rounded-2xl overflow-hidden border border-sky-500/60 bg-black shrink-0"></div>
+              <div>
+                <h2 class="font-black text-sm text-white">«ضميري»</h2>
+                <span id="conscience-mood" class="text-[11px] font-bold text-sky-400">نبرة حذِرة — إنسانية عالية</span>
+              </div>
+            </div>
+            <span id="room-level-pill" class="text-[10.5px] font-extrabold px-2.5 py-1 rounded-lg bg-purple-950/70 text-purple-300 border border-purple-700/50">🔐 غرفة 0/4</span>
+          </div>
+          <p id="conscience-msg" class="text-xs sm:text-sm text-slate-200 leading-relaxed bg-[#090d16] p-3 rounded-xl border border-slate-800/90"></p>
+        </div>
+
+        <!-- Alibi Cards Box -->
+        <div class="bg-[#0f1523] border border-slate-800 rounded-2xl p-4 shadow-xl">
+          <div class="flex items-center justify-between mb-2.5">
+            <h3 class="font-extrabold text-sm text-white">🛡️ كروت حجج الغياب</h3>
+            <span id="survived-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-emerald-400">استجوابات: 0</span>
+          </div>
+          <div id="alibi-summary-grid" class="grid grid-cols-2 gap-2 text-xs"></div>
+
+          <div id="burn-btn-wrap" class="hidden mt-3 pt-3 border-t border-slate-800">
+            <button onclick="confirmBurnNotebook()" class="w-full btn-dark py-2 px-3 rounded-xl text-xs font-extrabold text-amber-300 border-amber-700/50 hover:border-amber-400">
+              🔥 التوبة وحرق المفكرة (نهاية التضحية)
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Story Directive -->
+        <div class="bg-gradient-to-b from-[#1a111a] to-[#0f1420] border border-red-900/45 rounded-2xl p-4 shadow-xl">
+          <div class="text-xs font-black text-red-400 mb-1">📌 المهمة والمستجدات</div>
+          <p id="directive-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed"></p>
+        </div>
+      </aside>
+
+      <!-- RIGHT MAIN WORKSPACE (6 Clean Tabs) -->
+      <div class="lg:col-span-8 flex flex-col gap-3.5">
+
+        <!-- 6 Navigation Tabs -->
+        <nav class="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+          <button onclick="switchTab('notebook')" id="tab-btn-notebook" class="tab-active btn-dark py-2.5 px-2 rounded-xl text-xs font-extrabold text-slate-300">📓 المفكرة</button>
+          <button onclick="switchTab('characters')" id="tab-btn-characters" class="btn-dark py-2.5 px-2 rounded-xl text-xs font-extrabold text-slate-300">👥 الشخصيات</button>
+          <button onclick="switchTab('room')" id="tab-btn-room" class="btn-dark py-2.5 px-2 rounded-xl text-xs font-extrabold text-slate-300">🔐 الغرفة</button>
+          <button onclick="switchTab('map')" id="tab-btn-map" class="btn-dark py-2.5 px-2 rounded-xl text-xs font-extrabold text-slate-300">🗺️ الخريطة</button>
+          <button onclick="switchTab('phone')" id="tab-btn-phone" class="btn-dark py-2.5 px-2 rounded-xl text-xs font-extrabold text-slate-300 relative">
+            📱 الموبايل <span id="phone-badge" class="hidden absolute -top-1 -left-1 bg-red-600 text-white text-[10px] font-black px-1.5 rounded-full">1</span>
+          </button>
+          <button onclick="switchTab('followers')" id="tab-btn-followers" class="btn-dark py-2.5 px-2 rounded-xl text-xs font-extrabold text-slate-300">👑 الأتباع</button>
+        </nav>
+
+        <!-- =============================================== -->
+        <!-- TAB 1: THE NOTEBOOK (+ Archive + Skins)         -->
+        <!-- =============================================== -->
+        <div id="tab-notebook" class="skin-classic rounded-3xl p-4 sm:p-6 shadow-2xl">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-lg sm:text-xl font-black text-white">مفكرة الظل — ZALVORA NOTE</h2>
+              <p class="text-xs text-slate-400">كل اسم يُكتب هنا يُنفَّذ خلال 40 ثانية بالضبط.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button onclick="switchNotebookSub('write')" id="nb-sub-write" class="tab-active btn-dark px-3 py-1.5 rounded-xl text-xs font-extrabold text-slate-200">✍️ الكتابة</button>
+              <button onclick="switchNotebookSub('archive')" id="nb-sub-archive" class="btn-dark px-3 py-1.5 rounded-xl text-xs font-extrabold text-slate-200">📜 الأرشيف (<span id="archive-count">0</span>)</button>
+              <button onclick="switchNotebookSub('skins')" id="nb-sub-skins" class="btn-dark px-3 py-1.5 rounded-xl text-xs font-extrabold text-slate-200">🎨 المظاهر</button>
+              <button id="btn-gen-global" onclick="generateGlobalTarget()" class="hidden btn-crimson px-3 py-1.5 rounded-xl text-xs font-extrabold text-white">🌍 + فتح ملف عالمي جديد</button>
+            </div>
+          </div>
+
+          <!-- SUB-VIEW 1A: WRITE -->
+          <div id="nb-view-write">
+            <!-- Live Notebook Paper + Animated Hand -->
+            <div id="notebook-live-page" class="notebook-paper rounded-2xl p-5 sm:p-6 min-h-[175px] mb-4 flex flex-col justify-between overflow-hidden">
+              <div class="flex items-center justify-between text-xs font-bold opacity-70 border-b border-stone-500/30 pb-1.5">
+                <span>صفحة رقم <span id="nb-page-num">1</span></span>
+                <span class="italic">«خلال 40 ثانية يتوقف النبض...»</span>
+              </div>
+
+              <div class="relative my-5 min-h-[62px] flex flex-col items-center justify-center">
+                <!-- Realistic Illustrated Hand Holding Pen -->
+                <svg id="writing-hand-svg" viewBox="0 0 220 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="skinG" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#f6d5b8" />
+                      <stop offset="60%" stop-color="#e5b995" />
+                      <stop offset="100%" stop-color="#c9956e" />
+                    </linearGradient>
+                    <linearGradient id="skinS" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#dfa982" />
+                      <stop offset="100%" stop-color="#b57d56" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Sleeve & Cuff -->
+                  <path d="M168 104 L220 132 L208 188 L146 150 Z" fill="#0f172a" stroke="#1e293b" stroke-width="2" />
+                  <path d="M162 100 L176 108 L154 156 L140 148 Z" fill="#f8fafc" />
+                  <line x1="168" y1="104" x2="146" y2="150" stroke="#c81e32" stroke-width="2.5" />
+                  <!-- Back of Hand -->
+                  <path d="M98 78 C116 68, 146 74, 165 102 L144 148 C120 144, 96 138, 82 122 C74 112, 82 88, 98 78 Z" fill="url(#skinG)" stroke="#7c5338" stroke-width="1.8" />
+                  <path d="M78 122 C66 124, 62 135, 72 142 C84 148, 108 144, 120 138" fill="url(#skinS)" stroke="#7c5338" stroke-width="1.6" />
+                  <!-- Fountain Pen -->
+                  <g transform="rotate(-48 48 146)">
+                    <rect x="44" y="22" width="13" height="122" rx="4" id="svg-pen-body" fill="#1e293b" stroke="#090d16" stroke-width="1.8" />
+                    <rect x="44" y="114" width="13" height="6" fill="#d97706" />
+                    <path d="M44 144 L50.5 170 L57 144 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="1.2" />
+                    <circle cx="50.5" cy="170" r="2.5" id="svg-pen-tip" fill="#1c1917" />
+                  </g>
+                  <!-- Fingers gripping pen -->
+                  <path d="M96 105 C76 106, 56 116, 52 126 C50 134, 64 138, 82 132 C94 128, 106 120, 112 114" fill="url(#skinS)" stroke="#7c5338" stroke-width="1.7" />
+                  <path d="M114 78 C92 74, 66 84, 54 102 C48 111, 56 120, 68 114 C82 106, 98 96, 118 96" fill="url(#skinG)" stroke="#7c5338" stroke-width="1.8" />
+                  <path d="M126 116 C106 110, 82 112, 68 122 C60 128, 66 138, 80 137 C98 136, 116 132, 132 130" fill="url(#skinG)" stroke="#7c5338" stroke-width="1.8" />
+                </svg>
+
+                <div id="notebook-written-name" class="font-ink text-3xl sm:text-4xl font-bold text-center text-stone-800/45 select-none">
+                  اختر هدفاً للكتابة...
+                </div>
+                <div id="notebook-written-meta" class="text-xs font-bold text-stone-700/80 mt-1 text-center"></div>
+              </div>
+
+              <div class="text-[11px] font-semibold opacity-65 flex justify-between">
+                <span id="nb-status-text">في انتظار القلم</span>
+                <span id="nb-pen-label">القلم: حبر كلاسيكي</span>
+              </div>
+            </div>
+
+            <!-- Notebook Form Controls -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              <!-- 1. Pen Selector -->
+              <div class="bg-[#0e121c] border border-slate-800 rounded-2xl p-3.5">
+                <label class="block text-xs font-extrabold text-slate-300 mb-2">✒️ 1. اختر القلم</label>
+                <div id="pen-selector" class="flex flex-col gap-1.5"></div>
+              </div>
+
+              <!-- 2. Target Selector -->
+              <div class="bg-[#0e121c] border border-slate-800 rounded-2xl p-3.5">
+                <label class="block text-xs font-extrabold text-slate-300 mb-2">🎯 2. اختر الهدف (<span id="open-targets-count">0</span> ملف مفتوح)</label>
+                <select id="target-select" onchange="onTargetSelectChange()" class="w-full bg-[#161d2e] border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-red-500"></select>
+                <div id="target-dossier-info" class="mt-2 text-xs text-slate-300 bg-[#090c14] p-2.5 rounded-xl border border-slate-800 min-h-[70px] leading-relaxed"></div>
+              </div>
+
+              <!-- 3. Cause & Timing -->
+              <div class="bg-[#0e121c] border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                <div>
+                  <label class="block text-xs font-extrabold text-slate-300 mb-1.5">⏳ 3. سبب الوفاة</label>
+                  <select id="method-select" class="w-full bg-[#161d2e] border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-red-500">
+                    <option value="heart">سكتة قلبية طبيعية (تمويه آمن، أقل شك)</option>
+                    <option value="accident">حادث غامض (+12 نقاط، شك متوسط)</option>
+                    <option value="confess">اعتراف علني بالفساد ثم انهيار (+25 نقاط، +رأي الشارع)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-extrabold text-slate-300 mb-1.5">🕰️ التوقيت المحدد</label>
+                  <select id="timing-select" class="w-full bg-[#161d2e] border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-red-500">
+                    <option value="فوري (40 ثانية)">فوري (خلال 40 ثانية)</option>
+                    <option value="منتصف الليل (00:00)">منتصف الليل (00:00 — تمويه توقيت)</option>
+                    <option value="وقت الذروة الإخباري (21:00)">وقت الذروة (21:00 — تأثير إعلامي)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 4. Pre-Death Condition & Alibi -->
+              <div class="bg-[#0e121c] border border-slate-800 rounded-2xl p-3.5 space-y-2.5">
+                <div>
+                  <label class="block text-xs font-extrabold text-slate-300 mb-1.5">🎭 4. شرط ما قبل الموت (تضليل المحقق)</label>
+                  <select id="condition-select" class="w-full bg-[#161d2e] border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-red-500">
+                    <option value="none">بدون شرط إضافي</option>
+                    <option value="mislead">يترك رسالة تضليل توجه الشرطة لحي خاطئ (-8% شك)</option>
+                    <option value="snitch">يعترف قبل موته على عصابة أخرى (+10 نقاط، -5% شك)</option>
+                    <option value="donate">يتبرع بأمواله المسروقة للفقراء (+10 رأي الشارع)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-extrabold text-slate-300 mb-1.5">🛡️ 5. حجة الغياب</label>
+                  <select id="alibi-select" class="w-full bg-[#161d2e] border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-red-500"></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <div id="masked-warning-text" class="text-xs text-slate-400">
+                تأكد من اختيار حجة غياب قوية لتفادي وصول الشك إلى 100%.
+              </div>
+              <button id="btn-write-name" onclick="executeWriteName()" class="btn-crimson px-7 py-3 rounded-xl font-black text-white text-sm sm:text-base">
+                ✍️ اكتب الاسم في المفكرة
+              </button>
+            </div>
+          </div>
+
+          <!-- SUB-VIEW 1B: NOTEBOOK ARCHIVE -->
+          <div id="nb-view-archive" class="hidden">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <p class="text-xs text-slate-300">الأسماء المكتوبة بالحبر السري لا تظهر إلا بتشغيل مصباح الأشعة فوق البنفسجية (UV).</p>
+              <button id="btn-uv-toggle" onclick="toggleArchiveUV()" class="btn-dark px-3.5 py-2 rounded-xl text-xs font-extrabold text-violet-300 border-violet-600/50">
+                🔦 تشغيل مصباح UV
+              </button>
+            </div>
+            <div id="archive-paper-wrap" class="notebook-paper rounded-2xl p-4 sm:p-5 min-h-[280px]">
+              <div id="archive-entries-list" class="flex flex-col gap-3"></div>
+            </div>
+          </div>
+
+          <!-- SUB-VIEW 1C: NOTEBOOK SKINS -->
+          <div id="nb-view-skins" class="hidden">
+            <p class="text-xs text-slate-300 mb-3">خصص مظهر مفكرتك باستخدام نقاط النفوذ أو إنجازاتك:</p>
+            <div id="skins-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+          </div>
+        </div>
+
+        <!-- =============================================== -->
+        <!-- TAB 2: CHARACTERS & FAMILY                      -->
+        <!-- =============================================== -->
+        <div id="tab-characters" class="hidden bg-[#0f1523] border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl">
+          <div class="mb-4">
+            <h2 class="text-lg sm:text-xl font-black text-white">👥 شخصيات زالفورا والعيلة وجبهة التحقيق</h2>
+            <p class="text-xs text-slate-400">تعاون مع لوكاس ومَايَا لكشف الأسماء المستعارة («العقرب»، «الأستاذ»، و«المقلّد») واجمع حجج الغياب من عائلتك.</p>
+          </div>
+          <h3 class="text-xs font-black text-sky-400 mb-2.5">🏠 العيلة والأصدقاء (دعم، حجج غياب، وكشف أسماء)</h3>
+          <div id="allies-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5"></div>
+          <h3 class="text-xs font-black text-red-400 mb-2.5">🕵️ جبهة التحقيق والمطاردة والمقلّد</h3>
+          <div id="investigators-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+
+        <!-- =============================================== -->
+        <!-- TAB 3: SECRET ROOM UPGRADES (4 LEVELS)          -->
+        <!-- =============================================== -->
+        <div id="tab-room" class="hidden bg-[#0f1523] border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-lg sm:text-xl font-black text-white">🔐 تطوير غرفة راين السرية</h2>
+              <p class="text-xs text-slate-400">طوّر مخبأك حتى المستوى 4 لتصل إلى الحصانة الكاملة ضد مداهمات ريكس هارون.</p>
+            </div>
+            <div class="bg-[#090d16] border border-amber-500/40 px-3.5 py-2 rounded-xl text-xs font-extrabold text-amber-400">
+              النقاط المتاحة: <span id="room-pts-display">40</span>
+            </div>
+          </div>
+          <div id="room-upgrades-list" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+        </div>
+
+        <!-- =============================================== -->
+        <!-- TAB 4: INTERACTIVE CITY MAP & DETECTIVE BOARD   -->
+        <!-- =============================================== -->
+        <div id="tab-map" class="hidden bg-[#0f1523] border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-5">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-white mb-1">🗺️ خريطة مدينة زالفورا الليلية</h2>
+            <p class="text-xs text-slate-400 mb-3">اضغط على أي حي مضيء في الخريطة لمعاينة الأهداف النشطة أو جمع معلومات ميدانية.</p>
+
+            <!-- Dark Stylized Interactive SVG Map -->
+            <div class="bg-[#070a13] border border-slate-800 rounded-2xl overflow-hidden relative">
+              <svg viewBox="0 0 700 310" class="w-full h-auto block select-none">
+                <defs>
+                  <radialGradient id="mapGlow" cx="50%" cy="50%" r="55%">
+                    <stop offset="0%" stop-color="#172038" />
+                    <stop offset="100%" stop-color="#050811" />
+                  </radialGradient>
+                </defs>
+                <rect width="700" height="310" fill="url(#mapGlow)" />
+                <!-- Coastline / Sea -->
+                <path d="M0 245 Q180 220, 360 255 T700 235 L700 310 L0 310 Z" fill="#071426" stroke="#1d4ed8" stroke-opacity="0.35" stroke-width="2" />
+                <text x="580" y="288" fill="#38bdf8" opacity="0.35" font-size="13" font-weight="bold">بحر زالفورا المظلم</text>
+                <!-- City Roads Grid -->
+                <path d="M70 80 L630 80 M90 165 L610 165 M210 30 L210 235 M440 30 L440 245 M325 80 L325 245" stroke="#1e293b" stroke-width="2.5" stroke-dasharray="6 4" />
+
+                <!-- District Pins (Clickable) -->
+                <!-- 1. Port (الميناء) -->
+                <g class="cursor-pointer" onclick="selectMapDistrict('port')">
+                  <circle cx="150" cy="220" r="18" fill="#dc2626" opacity="0.25" class="map-pin-pulse" />
+                  <circle cx="150" cy="220" r="8" fill="#ef4444" stroke="#fff" stroke-width="2" />
+                  <text x="150" y="200" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold">⚓ الميناء القديم</text>
+                </g>
+                <!-- 2. Court (المحكمة) -->
+                <g class="cursor-pointer" onclick="selectMapDistrict('court')">
+                  <circle cx="325" cy="145" r="18" fill="#f59e0b" opacity="0.25" class="map-pin-pulse" />
+                  <circle cx="325" cy="145" r="8" fill="#f59e0b" stroke="#fff" stroke-width="2" />
+                  <text x="325" y="125" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold">⚖️ قصر العدالة</text>
+                </g>
+                <!-- 3. University (الجامعة) -->
+                <g class="cursor-pointer" onclick="selectMapDistrict('university')">
+                  <circle cx="545" cy="78" r="16" fill="#38bdf8" opacity="0.25" class="map-pin-pulse" />
+                  <circle cx="545" cy="78" r="8" fill="#38bdf8" stroke="#fff" stroke-width="2" />
+                  <text x="545" y="58" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold">🎓 جامعة زالفورا</text>
+                </g>
+                <!-- 4. Family Home (بيت العيلة) -->
+                <g class="cursor-pointer" onclick="selectMapDistrict('home')">
+                  <circle cx="155" cy="78" r="16" fill="#10b981" opacity="0.25" class="map-pin-pulse" />
+                  <circle cx="155" cy="78" r="8" fill="#10b981" stroke="#fff" stroke-width="2" />
+                  <text x="155" y="58" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold">🏠 بيت عائلة كاليد</text>
+                </g>
+                <!-- 5. Arthur's Cafe (كافيه آرثر) -->
+                <g class="cursor-pointer" onclick="selectMapDistrict('cafe')">
+                  <circle cx="460" cy="185" r="16" fill="#a855f7" opacity="0.25" class="map-pin-pulse" />
+                  <circle cx="460" cy="185" r="8" fill="#a855f7" stroke="#fff" stroke-width="2" />
+                  <text x="460" y="165" text-anchor="middle" fill="#f8fafc" font-size="12" font-weight="bold">☕ كافيه آرثر</text>
+                </g>
+                <!-- 6. Police HQ (مقر الشرطة) -->
+                <g class="cursor-pointer" onclick="selectMapDistrict('police')">
+                  <circle cx="325" cy="52" r="18" fill="#e11d48" opacity="0.28" class="map-pin-pulse" />
+                  <circle cx="325" cy="52" r="8" fill="#e11d48" stroke="#fff" stroke-width="2" />
+                  <text x="325" y="32" text-anchor="middle" fill="#fecdd3" font-size="12" font-weight="bold">🚨 مقر شرطة زالفورا</text>
+                </g>
+              </svg>
+            </div>
+            <div id="map-district-info" class="mt-3 bg-[#090d16] border border-slate-800 rounded-2xl p-3.5 text-xs sm:text-sm text-slate-300">
+              اضغط على أي منطقة في خريطة زالفورا لعرض تفاصيلها والأهداف النشطة فيها.
+            </div>
+          </div>
+
+          <!-- Detective Sero's Investigation Board -->
+          <div class="border-t border-slate-800 pt-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h3 class="text-base font-black text-red-400">🧵 لوحة خيوط التحقيق (عيون سيرو فان)</h3>
+                <p class="text-xs text-slate-400">تُكشف تفاصيلها الكاملة عند تطوير الغرفة للمستوى 3 (أو ذكاء 40).</p>
+              </div>
+              <span class="text-xs font-black bg-red-950/80 border border-red-700/60 text-red-300 px-3 py-1 rounded-full">
+                اقتراب سيرو منك: <span id="board-proximity">5%</span>
+              </span>
+            </div>
+            <div id="investigation-board-box" class="relative bg-[#140e12] border border-red-900/50 rounded-2xl p-4 overflow-hidden"></div>
+          </div>
+        </div>
+
+        <!-- =============================================== -->
+        <!-- TAB 5: ENCRYPTED PHONE & CAMERA WIPE MINI-GAME  -->
+        <!-- =============================================== -->
+        <div id="tab-phone" class="hidden bg-[#0f1523] border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-5">
+          <!-- Encrypted Messages -->
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h2 class="text-lg sm:text-xl font-black text-white">📱 موبايل راين المشفّر</h2>
+                <p class="text-xs text-slate-400">رسائل فورية وأحداث عشوائية من لوكاس، مايا، عائلتك، وسيرو فان.</p>
+              </div>
+              <button onclick="triggerRandomPhoneEvent()" class="btn-dark px-3.5 py-2 rounded-xl text-xs font-extrabold text-sky-300">📡 فحص الرسائل الجديدة</button>
+            </div>
+            <div id="phone-messages-list" class="flex flex-col gap-3"></div>
+          </div>
+
+          <!-- Playable Mini-Game 1: Camera Wipe with Lucas -->
+          <div class="border-t border-slate-800 pt-4">
+            <div class="bg-[#0a0f1c] border border-cyan-800/60 rounded-2xl p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <div>
+                  <h3 class="text-sm sm:text-base font-black text-cyan-300">💻 تحدي ذكاء: مسح تسجيل الكاميرا (مع لوكاس)</h3>
+                  <p class="text-xs text-slate-400">اضغط «اختراق الآن» عندما يمر المؤشر داخل المنطقة الخضراء 3 مرات قبل أن تسحب كلارا نور الفيديو! (ينقص الشك -12% ويزيد الذكاء +6).</p>
+                </div>
+                <button id="btn-start-cctv" onclick="startCCTVMiniGame()" class="btn-crimson px-4 py-2 rounded-xl text-xs font-extrabold text-white">▶ بدء الاختراق</button>
+              </div>
+
+              <div id="cctv-game-area" class="hidden mt-3 space-y-3 bg-black/60 border border-cyan-900/60 rounded-xl p-4">
+                <div class="flex justify-between text-xs font-bold">
+                  <span class="text-cyan-300">النجاحات: <strong id="cctv-hits">0</strong> / 3</span>
+                  <span class="text-red-400">الوقت المتبقي: <strong id="cctv-time">12</strong> ث</span>
+                </div>
+                <!-- Moving Bar -->
+                <div class="relative w-full h-8 bg-slate-900 rounded-xl overflow-hidden border border-slate-700">
+                  <div id="cctv-target-zone" class="absolute top-0 bottom-0 bg-emerald-500/35 border-x-2 border-emerald-400" style="left: 38%; width: 24%;"></div>
+                  <div id="cctv-cursor" class="absolute top-0 bottom-0 w-2.5 bg-cyan-300 shadow-[0_0_12px_#22d3ee] rounded" style="left: 0%;"></div>
+                </div>
+                <button onclick="attemptCCTVHit()" class="btn-crimson w-full py-2.5 rounded-xl font-black text-white text-sm">⚡ اختراق وحذف المقطع الآن!</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =============================================== -->
+        <!-- TAB 6: SECRET FOLLOWERS (NEW WORLD RULER MODE)  -->
+        <!-- =============================================== -->
+        <div id="tab-followers" class="hidden bg-[#0f1523] border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl">
+          <div class="mb-4">
+            <h2 class="text-lg sm:text-xl font-black text-amber-300">👑 شبكة الأتباع السريين</h2>
+            <p class="text-xs text-slate-400">تُفتح هذه الشبكة بالكامل عند دخولك «عصر حاكم العالم الجديد» بعد الوصول لأي نهاية.</p>
+          </div>
+          <div id="followers-content"></div>
+        </div>
+
+      </div>
+    </main>
+  </section>
+
+  <!-- ========================================================= -->
+  <!-- SCREEN 3: INTERROGATION ROOM + HEARTBEAT MINI-GAME        -->
+  <!-- ========================================================= -->
+  <section id="screen-interrogation" class="hidden fixed inset-0 z-[65] bg-[#060206]/96 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="interrogation-flash w-full max-w-3xl bg-[#0e0a12] border-2 border-red-600 rounded-3xl overflow-hidden shadow-2xl my-auto">
+      <div class="bg-red-950/90 px-5 py-3.5 flex flex-wrap items-center justify-between gap-2 border-b border-red-700/60">
+        <div class="flex items-center gap-2.5">
+          <span class="w-3 h-3 rounded-full bg-red-500 animate-ping"></span>
+          <span id="interr-title" class="font-black text-white text-sm sm:text-base">🚨 غرفة الاستجواب — المواجهة مع سيرو فان</span>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <span id="interr-progress" class="text-xs font-bold text-red-200 bg-black/40 px-3 py-1 rounded-lg">السؤال 1 / 3</span>
+          <span id="interr-timer" class="text-sm font-black text-white bg-red-600 px-3 py-1 rounded-lg min-w-[58px] text-center">15 ث</span>
+        </div>
+      </div>
+
+      <div class="w-full h-1.5 bg-slate-900">
+        <div id="interr-timer-bar" class="h-full bg-red-500 transition-all duration-1000 linear" style="width: 100%"></div>
+      </div>
+
+      <div class="p-5 sm:p-7">
+        <!-- Questions View -->
+        <div id="interr-questions-view">
+          <div class="flex flex-col sm:flex-row items-center gap-4 mb-5 bg-[#150e1a] p-4 rounded-2xl border border-red-900/50">
+            <div id="interr-portrait" class="w-24 h-24 rounded-2xl bg-black border border-red-700/70 overflow-hidden shrink-0"></div>
+            <div class="flex-1 text-center sm:text-right">
+              <div id="interr-speaker" class="text-xs font-extrabold text-red-400 mb-1">سِيرُو فَان (المحلل السلوكي):</div>
+              <p id="interr-question" class="text-base sm:text-lg font-extrabold text-white leading-relaxed"></p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-300 mb-3 px-1">
+            <span>إجاباتك المقنعة: <strong id="interr-score" class="text-emerald-400">0 / 3</strong></span>
+            <span>مطلوب 2 إجابات قوية + اجتياز كشف الكذب</span>
+          </div>
+
+          <div id="interr-options" class="flex flex-col gap-2.5"></div>
+        </div>
+
+        <!-- Playable Mini-Game 2: Polygraph Heartbeat Stabilizer -->
+        <div id="interr-polygraph-view" class="hidden text-center space-y-4">
+          <div class="text-xs font-black text-red-400 uppercase tracking-widest">❤️‍🔥 المرحلة الحاسمة — جهاز كشف الكذب</div>
+          <h3 class="text-xl font-black text-white">حافظ على نبض قلبك داخل المنطقة الخضراء الهادئة لمدة 7 ثوانٍ!</h3>
+          <p class="text-xs text-slate-300">النبض يتصاعد تلقائياً من التوتر — اضغط الزر بالأسفل (أو زر المسافة <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-600">Space</kbd>) لتهدئة نبضك وإثبات براءتك!</p>
+
+          <div class="max-w-lg mx-auto bg-black/70 border border-slate-800 rounded-2xl p-4 space-y-3">
+            <div class="flex justify-between text-xs font-bold">
+              <span class="text-emerald-400">ثبات النبض: <strong id="hb-calm-pct">0%</strong></span>
+              <span class="text-amber-300">الوقت المتبقي: <strong id="hb-time-left">7.0</strong> ث</span>
+            </div>
+            <div class="relative w-full h-9 bg-slate-900 rounded-xl overflow-hidden border border-slate-700">
+              <!-- Calm Green Zone (22% to 58%) -->
+              <div class="absolute top-0 bottom-0 bg-emerald-500/35 border-x-2 border-emerald-400" style="left: 22%; width: 36%;"></div>
+              <!-- Heartbeat Needle -->
+              <div id="hb-needle" class="absolute top-0 bottom-0 w-3 bg-red-500 shadow-[0_0_14px_#ef4444] rounded" style="left: 42%;"></div>
+            </div>
+            <button onpointerdown="calmHeartbeatPulse(event)" class="btn-crimson w-full py-3.5 rounded-xl font-black text-white text-base select-none">
+              🫁 تهدئة النبض (اضغط بسرعة أو Space)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= -->
+  <!-- SCREEN 4: MULTIPLE ENDINGS & NEW WORLD RULER MODE         -->
+  <!-- ========================================================= -->
+  <section id="screen-ending" class="hidden fixed inset-0 z-[68] bg-[#05070d]/98 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-2xl bg-[#0e131f] border border-red-800/70 rounded-3xl p-6 sm:p-8 text-center shadow-2xl my-auto">
+      <div id="ending-icon" class="text-5xl mb-3">👑</div>
+      <span id="ending-tag" class="text-xs font-black px-3 py-1 rounded-full bg-red-950 text-red-300 border border-red-800/60">نهاية القصة</span>
+      <h2 id="ending-title" class="text-2xl sm:text-3xl font-black text-white mt-3 mb-3"></h2>
+      <p id="ending-desc" class="text-sm sm:text-base text-slate-300 leading-loose mb-6"></p>
+
+      <div id="ending-stats" class="grid grid-cols-3 gap-3 mb-6 bg-[#080b12] p-4 rounded-2xl border border-slate-800 text-xs"></div>
+
+      <div class="flex flex-col gap-3">
+        <button onclick="enterNewWorldRulerMode()" class="btn-crimson w-full py-4 px-5 rounded-2xl font-black text-white text-base sm:text-lg shadow-xl">
+          👑 العودة للكتابة — عصر حاكم العالم الجديد
+          <span class="block text-xs font-semibold text-red-100/90 mt-1">احتفظ بتطويراتك وذكائك وافتح 12 هدفاً عالمياً + مولّد ملفات لا نهائي + شبكة الأتباع!</span>
+        </button>
+        <button onclick="resetGameConfirmed()" class="btn-dark w-full py-3 px-5 rounded-xl font-bold text-slate-300 text-sm">
+          🔄 بدء قصة جديدة من البداية
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= -->
+  <!-- FIXED BOTTOM BREAKING NEWS TICKER                         -->
+  <!-- ========================================================= -->
+  <footer class="ticker-fixed py-2 text-xs sm:text-sm font-bold text-red-100 flex items-center" title="مرّر الماوس لإيقاف الشريط مؤقتاً وقراءة الأخبار">
+    <div class="bg-red-700 text-white px-3 py-0.5 text-xs font-black shrink-0 z-10 shadow-md ml-2">🔴 عاجل — زالفورا</div>
+    <div class="overflow-hidden flex-1">
+      <div id="breaking-news-ticker" class="ticker-track"></div>
+    </div>
+  </footer>
+
+  <!-- ========================================================= -->
+  <!-- JAVASCRIPT ENGINE (CLEAN, SELF-CONTAINED, BUG-FREE)       -->
+  <!-- ========================================================= -->
+  <script>
+    'use strict';
+
+    /* ==========================================================
+       1. SAFE STORAGE WRAPPER (Works in sandboxed iframes too)
+       ========================================================== */
+    const SafeStorage = (() => {
+      const mem = {};
+      return {
+        get(k) {
+          try { return window.localStorage.getItem(k); } catch (e) { return mem[k] || null; }
+        },
+        set(k, v) {
+          mem[k] = v;
+          try { window.localStorage.setItem(k, v); } catch (e) {}
+        }
+      };
+    })();
+
+    /* ==========================================================
+       2. WEB AUDIO API SYNTHESIZER (RAIN + PEN + CLOCK + ALARM)
+       ========================================================== */
+    const AudioEngine = (() => {
+      let ctx = null;
+      let masterGain = null;
+      let muted = false;
+      let rainStarted = false;
+
+      function init() {
+        try {
+          if (!ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return false;
+            ctx = new AC();
+            masterGain = ctx.createGain();
+            masterGain.gain.value = muted ? 0 : 0.9;
+            masterGain.connect(ctx.destination);
+          }
+          if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function startRain() {
+        if (!init() || rainStarted) return;
+        rainStarted = true;
+        try {
+          const len = ctx.sampleRate * 3;
+          // Layer 1: Light Rain (Filtered Pink Noise)
+          const pinkBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+          const pd = pinkBuf.getChannelData(0);
+          let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+          for (let i = 0; i < len; i++) {
+            const w = Math.random() * 2 - 1;
+            b0 = 0.99886*b0 + w*0.0555179; b1 = 0.99332*b1 + w*0.0750759;
+            b2 = 0.96900*b2 + w*0.1538520; b3 = 0.86650*b3 + w*0.3104856;
+            b4 = 0.55000*b4 + w*0.5329522; b5 = -0.7616*b5 - w*0.0168980;
+            pd[i] = (b0+b1+b2+b3+b4+b5+b6 + w*0.5362) * 0.055;
+            b6 = w*0.115926;
+          }
+          const s1 = ctx.createBufferSource(); s1.buffer = pinkBuf; s1.loop = true;
+          const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 0.6;
+          const g1 = ctx.createGain(); g1.gain.value = 0.38;
+          s1.connect(bp); bp.connect(g1); g1.connect(masterGain); s1.start();
+
+          // Layer 2: Deep Rain (Brown Noise)
+          const brBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+          const bd = brBuf.getChannelData(0);
+          let last = 0;
+          for (let i = 0; i < len; i++) {
+            last = (last + 0.03 * (Math.random() * 2 - 1)) / 1.03;
+            bd[i] = last * 2.2;
+          }
+          const s2 = ctx.createBufferSource(); s2.buffer = brBuf; s2.loop = true;
+          const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 480;
+          const g2 = ctx.createGain(); g2.gain.value = 0.34;
+          s2.connect(lp); lp.connect(g2); g2.connect(masterGain); s2.start();
+
+          // Layer 3: Subtle Raindrops
+          setInterval(() => {
+            if (muted || !ctx || ctx.state !== 'running' || Math.random() > 0.45) return;
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine';
+            const f = 900 + Math.random() * 1400;
+            o.frequency.setValueAtTime(f, ctx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(f * 0.55, ctx.currentTime + 0.04);
+            g.gain.setValueAtTime(0.02, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.0005, ctx.currentTime + 0.045);
+            o.connect(g); g.connect(masterGain); o.start(); o.stop(ctx.currentTime + 0.05);
+          }, 220);
+
+          // Layer 4: Distant Thunder Rumble
+          setInterval(() => {
+            if (muted || !ctx || ctx.state !== 'running' || Math.random() > 0.3) return;
+            const dLen = ctx.sampleRate * 2.4;
+            const tb = ctx.createBuffer(1, dLen, ctx.sampleRate);
+            const td = tb.getChannelData(0);
+            let l = 0;
+            for (let i = 0; i < dLen; i++) {
+              l = (l + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+              td[i] = l * 3.0;
+            }
+            const ts = ctx.createBufferSource(); ts.buffer = tb;
+            const tf = ctx.createBiquadFilter(); tf.type = 'lowpass'; tf.frequency.value = 105;
+            const tg = ctx.createGain();
+            tg.gain.setValueAtTime(0.001, ctx.currentTime);
+            tg.gain.linearRampToValueAtTime(0.24, ctx.currentTime + 0.5);
+            tg.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.3);
+            ts.connect(tf); tf.connect(tg); tg.connect(masterGain); ts.start();
+          }, 12000);
+        } catch (e) {}
+      }
+
+      function toggleMute() {
+        init();
+        if (!rainStarted) startRain();
+        muted = !muted;
+        if (masterGain && ctx) masterGain.gain.setTargetAtTime(muted ? 0 : 0.9, ctx.currentTime, 0.06);
+        document.querySelectorAll('.mute-toggle-btn').forEach(b => {
+          b.textContent = b.textContent.includes('الصوت') ? (muted ? '🔇 صامت' : '🔊 الصوت') : (muted ? '🔇' : '🔊');
+        });
+      }
+
+      function playClick() {
+        if (muted || !init()) return;
+        try {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine'; o.frequency.setValueAtTime(560, ctx.currentTime);
+          o.frequency.exponentialRampToValueAtTime(240, ctx.currentTime + 0.05);
+          g.gain.setValueAtTime(0.1, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.055);
+          o.connect(g); g.connect(masterGain); o.start(); o.stop(ctx.currentTime + 0.06);
+        } catch (e) {}
+      }
+
+      function playPenScratch() {
+        if (muted || !init()) return;
+        try {
+          const dur = 2.25, sz = ctx.sampleRate * dur;
+          const buf = ctx.createBuffer(1, sz, ctx.sampleRate), d = buf.getChannelData(0);
+          for (let i = 0; i < sz; i++) {
+            const t = i / ctx.sampleRate;
+            d[i] = (Math.random() * 2 - 1) * 0.35 * (Math.sin(t * 25) > -0.15 ? 1 : 0.12);
+          }
+          const s = ctx.createBufferSource(); s.buffer = buf;
+          const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2100; f.Q.value = 2.2;
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.01, ctx.currentTime);
+          g.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.15);
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+          s.connect(f); f.connect(g); g.connect(masterGain); s.start();
+        } catch (e) {}
+      }
+
+      function playClockHeartbeat(urgent) {
+        if (muted || !init()) return;
+        try {
+          // Clock tick
+          const o1 = ctx.createOscillator(), g1 = ctx.createGain();
+          o1.type = 'square'; o1.frequency.setValueAtTime(urgent ? 1200 : 880, ctx.currentTime);
+          g1.gain.setValueAtTime(0.05, ctx.currentTime);
+          g1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+          o1.connect(g1); g1.connect(masterGain); o1.start(); o1.stop(ctx.currentTime + 0.035);
+          // Heartbeat thump
+          const o2 = ctx.createOscillator(), g2 = ctx.createGain();
+          o2.type = 'sine';
+          o2.frequency.setValueAtTime(85, ctx.currentTime);
+          o2.frequency.exponentialRampToValueAtTime(36, ctx.currentTime + 0.16);
+          g2.gain.setValueAtTime(urgent ? 0.25 : 0.16, ctx.currentTime);
+          g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+          o2.connect(g2); g2.connect(masterGain); o2.start(); o2.stop(ctx.currentTime + 0.19);
+        } catch (e) {}
+      }
+
+      function playNewsChime() {
+        if (muted || !init()) return;
+        try {
+          [587.33, 440, 659.25].forEach((freq, i) => {
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = 'triangle'; o.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.11);
+            g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.11);
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.11 + 0.25);
+            o.connect(g); g.connect(masterGain);
+            o.start(ctx.currentTime + i * 0.11); o.stop(ctx.currentTime + i * 0.11 + 0.26);
+          });
+        } catch (e) {}
+      }
+
+      function playAlarm() {
+        if (muted || !init()) return;
+        try {
+          for (let i = 0; i < 3; i++) {
+            const st = ctx.currentTime + i * 0.4;
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = 'sawtooth';
+            o.frequency.setValueAtTime(160, st);
+            o.frequency.exponentialRampToValueAtTime(55, st + 0.28);
+            g.gain.setValueAtTime(0.2, st);
+            g.gain.exponentialRampToValueAtTime(0.001, st + 0.32);
+            o.connect(g); g.connect(masterGain); o.start(st); o.stop(st + 0.34);
+          }
+        } catch (e) {}
+      }
+
+      return { init, startRain, toggleMute, playClick, playPenScratch, playClockHeartbeat, playNewsChime, playAlarm };
+    })();
+
+    /* ==========================================================
+       3. DETAILED SVG ANIME PORTRAITS (CLEAR FACIAL FEATURES)
+       ========================================================== */
+    function getPortraitSVG(id, mood = 'normal') {
+      const presets = {
+        rayn: { bg1: '#111827', bg2: '#05070d', skin: '#f1d0b5', hair: '#151926', eyes: '#c81e32', coat: '#111827', collar: '#c81e32', style: 'sharp', brows: 'focused', mouth: 'serious', extra: 'tie' },
+        conscience: {
+          bg1: mood === 'cold' ? '#2c0910' : (mood === 'sarcastic' ? '#241a0b' : '#0b1d2e'),
+          bg2: '#04060a', skin: mood === 'cold' ? '#cfd8e3' : '#e2e8f0', hair: '#0a0d14',
+          eyes: mood === 'cold' ? '#ef4444' : (mood === 'sarcastic' ? '#f59e0b' : '#38bdf8'),
+          coat: '#090c14', collar: mood === 'cold' ? '#ef4444' : '#38bdf8',
+          style: 'sharp',
+          brows: mood === 'cold' ? 'angry' : (mood === 'sarcastic' ? 'smirk' : 'calm'),
+          mouth: mood === 'cold' ? 'serious' : (mood === 'sarcastic' ? 'smirk' : 'calm'),
+          extra: 'aura'
+        },
+        marcus: { bg1: '#172033', bg2: '#090d16', skin: '#e8c3a6', hair: '#94a3b8', eyes: '#334155', coat: '#1e293b', collar: '#e2e8f0', style: 'slick', brows: 'calm', mouth: 'calm', extra: 'glasses_beard' },
+        elena: { bg1: '#192236', bg2: '#0b101b', skin: '#f4d6be', hair: '#3b241a', eyes: '#0284c7', coat: '#334155', collar: '#f8fafc', style: 'long', brows: 'calm', mouth: 'smile', extra: '' },
+        damian: { bg1: '#1f1622', bg2: '#0a080f', skin: '#ecc6a8', hair: '#272026', eyes: '#475569', coat: '#18181b', collar: '#eab308', style: 'slick', brows: 'smirk', mouth: 'smirk', extra: 'tie' },
+        siro: { bg1: '#1b1118', bg2: '#07080d', skin: '#e6ddd5', hair: '#090b10', eyes: '#dc2626', coat: '#1e2430', collar: '#94a3b8', style: 'messy', brows: 'focused', mouth: 'serious', extra: 'eyebags' },
+        clara: { bg1: '#0f1f2b', bg2: '#070d14', skin: '#f2d3ba', hair: '#1e3a5f', eyes: '#06b6d4', coat: '#0f172a', collar: '#38bdf8', style: 'bob', brows: 'focused', mouth: 'calm', extra: 'glasses_headset' },
+        rex: { bg1: '#261214', bg2: '#0a0709', skin: '#dcae8c', hair: '#1c1917', eyes: '#b91c1c', coat: '#27272a', collar: '#ef4444', style: 'spiky', brows: 'angry', mouth: 'frown', extra: 'scar' },
+        vex: { bg1: '#1a1026', bg2: '#06050b', skin: '#dfd8d2', hair: '#cbd5e1', eyes: '#a855f7', coat: '#18181b', collar: '#a855f7', style: 'slick', brows: 'focused', mouth: 'serious', extra: 'glasses' },
+        lucas: { bg1: '#102420', bg2: '#070f10', skin: '#f0cfb2', hair: '#2e231c', eyes: '#10b981', coat: '#1f2937', collar: '#10b981', style: 'messy', brows: 'calm', mouth: 'smile', extra: 'glasses' },
+        maya: { bg1: '#24182a', bg2: '#0b0812', skin: '#f5d7bf', hair: '#5c1d2e', eyes: '#f59e0b', coat: '#312e81', collar: '#f8fafc', style: 'long', brows: 'focused', mouth: 'smile', extra: '' },
+        arthur: { bg1: '#211812', bg2: '#0b0806', skin: '#dfb897', hair: '#64748b', eyes: '#78350f', coat: '#451a03', collar: '#fde68a', style: 'slick', brows: 'calm', mouth: 'smile', extra: 'beard' },
+        cain: { bg1: '#2e0c12', bg2: '#0a0507', skin: '#e8dfd8', hair: '#7f1d1d', eyes: '#ef4444', coat: '#18181b', collar: '#dc2626', style: 'spiky', brows: 'angry', mouth: 'crazy', extra: 'scar' },
+        criminal: { bg1: '#1e1015', bg2: '#07080d', skin: '#e2bd9f', hair: '#1e293b', eyes: '#ef4444', coat: '#111827', collar: '#991b1b', style: 'slick', brows: 'angry', mouth: 'frown', extra: 'scar' }
+      };
+      const c = presets[id] || presets.criminal;
+
+      let hairBack = '', hairFront = '';
+      if (c.style === 'long') {
+        hairBack = `<path d="M22 44 C18 70, 18 88, 26 98 L74 98 C82 88, 82 70, 78 44 Z" fill="${c.hair}"/>`;
+        hairFront = `<path d="M24 44 C24 18, 76 18, 76 44 C70 30, 60 28, 52 34 C44 26, 32 30, 24 44 Z" fill="${c.hair}"/>`;
+      } else if (c.style === 'bob') {
+        hairBack = `<path d="M23 42 C20 62, 22 72, 30 76 L70 76 C78 72, 80 62, 77 42 Z" fill="${c.hair}"/>`;
+        hairFront = `<path d="M24 42 C24 18, 76 18, 76 42 L68 32 L54 36 L42 30 L28 38 Z" fill="${c.hair}"/>`;
+      } else if (c.style === 'messy') {
+        hairFront = `<path d="M22 46 C18 22, 36 10, 52 14 C68 8, 82 22, 78 46 L72 34 L63 40 L54 29 L44 39 L35 31 L27 42 Z" fill="${c.hair}"/>`;
+      } else if (c.style === 'spiky') {
+        hairFront = `<path d="M24 40 L20 24 L34 26 L42 14 L52 22 L64 13 L70 25 L80 22 L76 40 L66 30 L50 32 L34 30 Z" fill="${c.hair}"/>`;
+      } else if (c.style === 'slick') {
+        hairFront = `<path d="M25 42 C24 20, 42 14, 58 16 C72 18, 77 28, 75 42 C68 30, 56 26, 38 30 Z" fill="${c.hair}"/>`;
+      } else {
+        hairFront = `<path d="M24 44 C22 18, 42 12, 54 14 C70 14, 78 24, 76 44 L68 32 L58 38 L48 28 L38 37 L29 32 Z" fill="${c.hair}"/>`;
+      }
+
+      const brows = c.brows === 'angry'
+        ? `<path d="M33 41 L45 45 M67 41 L55 45" stroke="#111827" stroke-width="2.4" stroke-linecap="round"/>`
+        : c.brows === 'focused'
+        ? `<path d="M33 42 L45 43.5 M67 42 L55 43.5" stroke="#111827" stroke-width="2" stroke-linecap="round"/>`
+        : `<path d="M33 43 Q39 40 45 42 M55 42 Q61 40 67 43" stroke="#111827" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+
+      const mouth = c.mouth === 'smile'
+        ? `<path d="M43 62 Q50 67 57 62" stroke="#8c4a3e" stroke-width="2" fill="none" stroke-linecap="round"/>`
+        : c.mouth === 'crazy'
+        ? `<path d="M40 61 Q50 70 60 60" stroke="#7f1d1d" stroke-width="2.2" fill="#fff" stroke-linecap="round"/>`
+        : c.mouth === 'frown'
+        ? `<path d="M43 64 Q50 60 57 64" stroke="#7c3f35" stroke-width="2" fill="none" stroke-linecap="round"/>`
+        : `<line x1="44" y1="63" x2="56" y2="63" stroke="#7c3f35" stroke-width="1.9" stroke-linecap="round"/>`;
+
+      let extras = '';
+      if (c.extra === 'eyebags') extras += `<path d="M35 52 Q39 54 44 52 M56 52 Q61 54 65 52" stroke="#64748b" stroke-width="1.2" fill="none" opacity="0.75"/>`;
+      if (c.extra.includes('glasses')) {
+        extras += `<rect x="31" y="44" width="16" height="9" rx="2.5" fill="rgba(255,255,255,0.12)" stroke="#94a3b8" stroke-width="1.5"/><rect x="53" y="44" width="16" height="9" rx="2.5" fill="rgba(255,255,255,0.12)" stroke="#94a3b8" stroke-width="1.5"/><line x1="47" y1="48" x2="53" y2="48" stroke="#94a3b8" stroke-width="1.5"/>`;
+      }
+      if (c.extra.includes('headset')) {
+        extras += `<path d="M22 48 C20 20, 80 20, 78 48" fill="none" stroke="#38bdf8" stroke-width="2.5"/><rect x="19" y="44" width="6" height="14" rx="3" fill="#0ea5e9"/><rect x="75" y="44" width="6" height="14" rx="3" fill="#0ea5e9"/>`;
+      }
+      if (c.extra.includes('beard')) extras += `<path d="M35 63 C38 73, 62 73, 65 63 C61 68, 39 68, 35 63 Z" fill="${c.hair}" opacity="0.75"/>`;
+      if (c.extra === 'scar') extras += `<line x1="59" y1="39" x2="64" y2="54" stroke="#b91c1c" stroke-width="1.6" stroke-linecap="round"/>`;
+      if (c.extra === 'tie') extras += `<polygon points="48,76 52,76 54,96 50,100 46,96" fill="${c.collar}"/>`;
+      if (c.extra === 'aura') extras += `<circle cx="50" cy="50" r="46" fill="none" stroke="${c.eyes}" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5"/>`;
+
+      return `<svg viewBox="0 0 100 100" class="w-full h-full block" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" fill="${c.bg1}"/>
+        ${hairBack}
+        <path d="M14 100 C18 78, 34 73, 50 73 C66 73, 82 78, 86 100 Z" fill="${c.coat}"/>
+        <path d="M40 73 L50 88 L60 73" fill="#f8fafc" opacity="0.9"/>
+        <path d="M38 73 L50 92 L62 73" fill="none" stroke="${c.collar}" stroke-width="2.2"/>
+        <rect x="44" y="65" width="12" height="12" rx="4" fill="${c.skin}"/>
+        <circle cx="29" cy="50" r="4" fill="${c.skin}"/><circle cx="71" cy="50" r="4" fill="${c.skin}"/>
+        <path d="M30 42 C30 24, 70 24, 70 42 C70 57, 61 70, 50 71 C39 70, 30 57, 30 42 Z" fill="${c.skin}"/>
+        <path d="M50 48 L48.5 55 L51.5 55.5" fill="none" stroke="#b58365" stroke-width="1.4" stroke-linecap="round"/>
+        <ellipse cx="39" cy="48.5" rx="4.8" ry="2.8" fill="#fff"/><circle cx="39.5" cy="48.5" r="2.2" fill="${c.eyes}"/><circle cx="40.3" cy="47.7" r="0.8" fill="#fff"/>
+        <ellipse cx="61" cy="48.5" rx="4.8" ry="2.8" fill="#fff"/><circle cx="60.5" cy="48.5" r="2.2" fill="${c.eyes}"/><circle cx="61.3" cy="47.7" r="0.8" fill="#fff"/>
+        ${brows}${mouth}${hairFront}${extras}
+      </svg>`;
+    }
+
+    /* ==========================================================
+       4. RAIN CANVAS ANIMATION
+       ========================================================== */
+    function initRainCanvas() {
+      const canvas = document.getElementById('rain-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let drops = [];
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        drops = [];
+        const n = Math.min(110, Math.floor(window.innerWidth / 12));
+        for (let i = 0; i < n; i++) {
+          drops.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, len: 14 + Math.random() * 22, spd: 8 + Math.random() * 8, a: 0.16 + Math.random() * 0.3 });
+        }
+      }
+      function tick() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i < drops.length; i++) {
+          const d = drops[i];
+          ctx.strokeStyle = `rgba(186,214,255,${d.a})`;
+          ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x - 2.5, d.y + d.len); ctx.stroke();
+          d.y += d.spd; d.x -= 1.2;
+          if (d.y > canvas.height) { d.y = -d.len; d.x = Math.random() * canvas.width; }
+        }
+        requestAnimationFrame(tick);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+      tick();
+    }
+
+    /* ==========================================================
+       5. STATIC DATA (INTRO, PENS, TARGETS, UPGRADES, SKINS, ACH)
+       ========================================================== */
+    const INTRO_SCENES = [
+      {
+        badge: 'المشهد 1 / 4', location: 'بوابة جامعة زالفورا — ليلة التخرج',
+        text: 'تحت سماء زالفورا الممطرة، يحتفل الجميع بآخر يوم في الجامعة. راين كاليد تخرج الأول في القانون الجنائي... لكنه يحدّق في أضواء المدينة الغارقة في الفساد والمجرمين الذين يشترون براءتهم بالمال.',
+        svg: `<svg viewBox="0 0 800 300" class="w-full h-full object-cover"><rect width="800" height="300" fill="#070c18"/><circle cx="650" cy="65" r="32" fill="#cbd5e1" opacity="0.2"/><rect x="130" y="95" width="40" height="205" fill="#0d1322" stroke="#334155" stroke-width="2"/><rect x="630" y="95" width="40" height="205" fill="#0d1322" stroke="#334155" stroke-width="2"/><path d="M150 95 Q400 22 650 95" fill="none" stroke="#334155" stroke-width="5"/><text x="400" y="84" text-anchor="middle" fill="#94a3b8" font-size="16" font-weight="bold">ZALVORA UNIVERSITY</text><g transform="translate(335,110)"><path d="M15 190 C25 142, 48 135, 65 135 C82 135, 105 142, 115 190 Z" fill="#0f172a"/><path d="M52 135 L65 162 L78 135" fill="#f8fafc"/><polygon points="62,140 68,140 70,175 65,182 60,175" fill="#c81e32"/><rect x="56" y="116" width="18" height="20" fill="#f1d0b5"/><path d="M36 78 C36 45, 94 45, 94 78 C94 103, 80 120, 65 122 C50 120, 36 103, 36 78 Z" fill="#f1d0b5"/><ellipse cx="51" cy="87" rx="6.5" ry="3.5" fill="#fff"/><circle cx="52" cy="87" r="2.8" fill="#c81e32"/><ellipse cx="79" cy="87" rx="6.5" ry="3.5" fill="#fff"/><circle cx="78" cy="87" r="2.8" fill="#c81e32"/><path d="M43 79 L59 82 M87 79 L71 82" stroke="#111" stroke-width="2.8"/><path d="M32 82 C30 38, 58 28, 72 31 C92 32, 102 50, 98 82 L86 62 L72 72 L58 58 L46 70 L38 62 Z" fill="#111622"/></g></svg>`
+      },
+      {
+        badge: 'المشهد 2 / 4', location: 'ساحة الجامعة الفارغة — منتصف الليل',
+        text: 'بينما يمشي راين وحيداً تحت المطر، تسقط أمام قدميه مفكرة جلدية سوداء غريبة... المذهل أن المطر ينهمر بغزارة، لكن قطرة ماء واحدة لا تبلّل غلافها!',
+        svg: `<svg viewBox="0 0 800 300" class="w-full h-full object-cover"><rect width="800" height="300" fill="#06080f"/><polygon points="400,0 230,300 570,300" fill="#38bdf8" opacity="0.06"/><ellipse cx="400" cy="225" rx="220" ry="44" fill="#0d1322" stroke="#1e293b"/><g transform="translate(334,175) rotate(-10)"><rect width="132" height="82" rx="7" fill="#09090b" stroke="#c81e32" stroke-width="2.5"/><text x="66" y="47" text-anchor="middle" fill="#c81e32" font-size="16" font-weight="bold">ZALVORA</text></g></svg>`
+      },
+      {
+        badge: 'المشهد 3 / 4', location: 'الصفحة الأولى من المفكرة',
+        text: 'يلتقطها راين بيد مرتجفة ويفتح الغلاف. الصفحات بيضاء تماماً، باستثناء سطر واحد مكتوب بلون قرمزي باهت: «أي اسم يُكتب هنا، تتوقف حياته خلال 40 ثانية.»',
+        svg: `<svg viewBox="0 0 800 300" class="w-full h-full object-cover"><rect width="800" height="300" fill="#05060a"/><rect x="160" y="30" width="480" height="240" rx="10" fill="#18181b" stroke="#3f3f46" stroke-width="3"/><rect x="176" y="42" width="218" height="216" rx="4" fill="#e6d7ba"/><rect x="406" y="42" width="218" height="216" rx="4" fill="#dfd0b2"/><text x="515" y="130" text-anchor="middle" fill="#991b1b" font-size="18" font-weight="bold">أي اسم يُكتب هنا،</text><text x="515" y="166" text-anchor="middle" fill="#991b1b" font-size="18" font-weight="bold">تتوقف حياته خلال 40 ثانية.</text></svg>`
+      },
+      {
+        badge: 'المشهد 4 / 4', location: 'غرفة راين — بيت عائلة كاليد',
+        text: 'يعود راين للمنزل ويفتح التلفزيون: خبر عاجل يعلن براءة «فَالْكُون» زعيم مافيا الميناء رغم جرائمه. المفكرة مفتوحة أمامك الآن... هل تبدأ الكتابة أم تدرس الموقف بحذر؟',
+        svg: `<svg viewBox="0 0 800 300" class="w-full h-full object-cover"><rect width="800" height="300" fill="#070a12"/><rect x="225" y="25" width="350" height="165" rx="10" fill="#111827" stroke="#334155" stroke-width="4"/><rect x="237" y="37" width="326" height="141" fill="#1e0a0f"/><rect x="237" y="146" width="326" height="32" fill="#c81e32"/><text x="400" y="167" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="bold">عاجل: براءة «فَالْكُون» زعيم مافيا الميناء</text><circle cx="400" cy="86" r="24" fill="#09090b"/><path d="M362 146 C368 114, 432 114, 438 146 Z" fill="#09090b"/><rect x="0" y="225" width="800" height="75" fill="#0b0f19"/><rect x="330" y="238" width="140" height="46" rx="5" fill="#111" stroke="#c81e32" stroke-width="2"/></svg>`
+      }
+    ];
+
+    const PENS = [
+      { id: 'classic', name: 'قلم حبر كلاسيكي (أسود)', desc: 'متوازن ولا يترك بصمة مميزة.', color: '#1c1917', body: '#1e293b', suspMod: 0, ptsMod: 0, reqRoom: 0 },
+      { id: 'red', name: 'قلم الحبر القرمزي (أحمر)', desc: 'يرعب المجرمين (+15 نقاط) لكنه يرفع الشك (+6%).', color: '#b91c1c', body: '#991b1b', suspMod: 6, ptsMod: 15, reqRoom: 0 },
+      { id: 'uv', name: 'قلم الحبر السري (أشعة UV)', desc: 'يقلل الشك (-12%) ولا يُقرأ إلا تحت مصباح UV.', color: '#38bdf8', body: '#6d28d9', suspMod: -12, ptsMod: 10, reqRoom: 1 }
+    ];
+
+    const NOTEBOOK_SKINS = [
+      { id: 'classic', name: 'الجلد الأسود الكلاسيكي', desc: 'المفكرة الأصلية كما وجدتها تحت المطر.', css: 'skin-classic', cost: 0 },
+      { id: 'crimson', name: 'القرمزي الملكي', desc: 'غلاف جلد قرمزي داكن يليق بحاكم الظل.', css: 'skin-crimson', cost: 45 },
+      { id: 'golden', name: 'مفكرة الحاكم الذهبية', desc: 'إصدار أسطوري مذهّب للسيطرة المطلقة.', css: 'skin-golden', cost: 90 },
+      { id: 'vintage', name: 'الورق العتيق الأثري', desc: 'غلاف بني أثري بصفحات صفراء قديمة.', css: 'skin-vintage', cost: 60 }
+    ];
+
+    const BASE_TARGETS = [
+      // 11 Main Zalvora Targets (including Aliases, Brother Damian, Copycat Kain)
+      { id: 'falcon', name: 'فَالْكُون', title: 'زعيم مافيا الميناء', district: 'port', desc: 'هرب من العدالة برشوة الشهود. أول اختبار حقيقي لقوة المفكرة.', baseSusp: 20, humCost: 8, pts: 35, intGain: 7, pubGain: 8, portrait: 'criminal', news: 'صدمة في زالفورا: وفاة «فَالْكُون» زعيم مافيا الميناء بعد ساعات من براءته!' },
+      { id: 'kross', name: 'الدكتور كْرُوس', title: 'تاجر الأدوية الفاسدة', district: 'university', desc: 'يدير مصانع أدوية مغشوشة تسببت في مآسٍ للأحياء الفقيرة.', baseSusp: 22, humCost: 8, pts: 40, intGain: 8, pubGain: 8, portrait: 'criminal', news: 'عاجل: العثور على الدكتور كْرُوس ميتاً داخل مختبره... والشرطة تتحدث عن «قاتل الظل»!' },
+      { id: 'scorpion', name: 'رِيكَارْدُو سَالْفَا', alias: 'العقرب (اسم مستعار)', unmaskBy: 'lucas', title: 'رأس عصابة التهريب الرقمي', district: 'port', desc: 'معروف فقط بلقب «العقرب». اطلب من لوكاس في تبويب الشخصيات اختراق بياناته لكشف اسمه الحقيقي!', baseSusp: 24, humCost: 7, pts: 48, intGain: 10, pubGain: 7, portrait: 'criminal', news: 'سقوط «العقرب» ريكاردو سالفا يهز شبكة التهريب في ميناء زالفورا!' },
+      { id: 'marco', name: 'الجزار مَارْكُو', title: 'زعيم الابتزاز الليلي', district: 'port', desc: 'يسيطر على مستودعات الميناء القديم بقبضة من حديد.', baseSusp: 22, humCost: 7, pts: 42, intGain: 8, pubGain: 6, portrait: 'criminal', news: 'انهيار عصابة الميناء القديم إثر الوفاة الغامضة للجزار مَارْكُو!' },
+      { id: 'professor', name: 'أَلِيكْسَنْدَر فُون', alias: 'الأستاذ (اسم مستعار)', unmaskBy: 'maya', title: 'العقل المدبر لغسيل الأموال', district: 'court', desc: 'شبح مالي معروف بلقب «الأستاذ». اطلب من مَايَا كشف اسمه الحقيقي لتتمكن من كتابته!', baseSusp: 26, humCost: 8, pts: 55, intGain: 12, pubGain: 7, portrait: 'criminal', news: 'عاجل: وفاة «الأستاذ» أليكساندر فون تكشف أكبر شبكة غسيل أموال في زالفورا!' },
+      { id: 'zander', name: 'القاضي زَانْدَر', title: 'القاضي المرتشي', district: 'court', desc: 'أصدر أحكام براءة لأخطر القتلة مقابل حسابات سرية.', baseSusp: 26, humCost: 9, pts: 52, intGain: 11, pubGain: 9, portrait: 'criminal', news: 'زلزال قضائي: وفاة القاضي زَانْدَر... وسيرو فان يصرح: الفاعل خبير في القانون!' },
+      { id: 'selena', name: 'الأفعى سِيلِينَا', title: 'مديرة شبكة السوق السوداء', district: 'cafe', desc: 'تخفي أموال العصابات خلف جمعيات وهمية في وسط المدينة.', baseSusp: 24, humCost: 8, pts: 48, intGain: 10, pubGain: 6, portrait: 'criminal', news: 'اهتزاز الأسواق السرية في زالفورا بعد وفاة «الأفعى سِيلِينَا» المفاجئة!' },
+      { id: 'victor', name: 'البارون فِيكْتُور', title: 'إمبراطور العقارات المغسولة', district: 'court', desc: 'شرّد مئات العائلات بالاستيلاء غير القانوني على أحياء كاملة.', baseSusp: 25, humCost: 8, pts: 55, intGain: 11, pubGain: 8, portrait: 'criminal', news: 'عاجل: سقوط البارون فِيكْتُور إمبراطور العقارات الفاسدة في ظروف غامضة!' },
+      { id: 'damian', name: 'دَامِيَان كَالِيد', title: 'الأخ الأكبر (معضلة العيلة)', district: 'home', desc: 'شقيقك الأكبر متورط في غسيل أموال للمافيا. كتابة اسمه تقتله بسكتة طبيعية بـ 0% شك وتبقي دعم العيلة سليماً، لكن إنسانيتك تنهار بشدة!', baseSusp: 0, humCost: 42, pts: 55, intGain: 10, pubGain: -6, isBrother: true, portrait: 'damian', news: 'وفاة المحامي دَامِيَان كَالِيد بسكتة قلبية طبيعية... وعائلته تتلقى العزاء في صدمة كبيرة.' },
+      { id: 'cain', name: 'كَايْن فَالِيرِي', alias: 'المقلّد المجنون (اسم مجهول)', unmaskBy: 'maya', title: 'المقلّد الذي ينسب جرائمك لنفسه', district: 'police', desc: 'مضطرب يهدد الأبرياء باسمك! اطلب من مَايَا كشف اسمه الحقيقي لتنهي فوضاه للأبد.', baseSusp: 14, humCost: 5, pts: 65, intGain: 14, pubGain: 12, isCopycat: true, portrait: 'cain', news: 'نهاية المقلّد المجنون: وفاة «كَايْن فَالِيرِي» على الهواء تثبت أن حاكم الظل لا يرحم!' },
+      { id: 'force', name: 'السيناتور فُورْس', title: 'العقل المدبر للفساد في زالفورا', district: 'court', desc: 'أقوى رجل في المدينة. القضاء عليه يضع زالفورا تحت سيطرتك ويفتح النهاية الكبرى.', baseSusp: 30, humCost: 10, pts: 85, intGain: 18, pubGain: 10, portrait: 'criminal', news: 'زلزال سياسي: وفاة السيناتور فُورْس تُسقط إمبراطورية الفساد في زالفورا!' },
+
+      // 12 Global Targets (Unlocked in New World Ruler Mode)
+      { id: 'g_crane', name: 'فيكتور كْرِين', title: 'إمبراطور السلاح الدولي (عالمي)', district: 'port', desc: 'يموّل الحروب السرية في ثلاث قارات.', baseSusp: 22, humCost: 6, pts: 80, intGain: 12, pubGain: 8, isGlobal: true, portrait: 'criminal', news: 'عاجل عالمياً: وفاة تاجر السلاح الدولي فيكتور كْرِين... التحالف الدولي يعلن الطوارئ!' },
+      { id: 'g_solaris', name: 'البارون سُولاريس', title: 'رأس مافيا البنوك العالمية (عالمي)', district: 'court', desc: 'يتحكم باقتصادات دول كاملة بالابتزاز المالي.', baseSusp: 24, humCost: 6, pts: 85, intGain: 12, pubGain: 8, isGlobal: true, portrait: 'criminal', news: 'انهيار الأسواق السوداء عالمياً بعد وفاة البارون سُولاريس!' },
+      { id: 'g_valera', name: 'الكونتيسة فَالِيرَا', title: 'زعيمة شبكة التجسس الأوروبية (عالمي)', district: 'cafe', desc: 'تدير منظمة لبيع أسرار الدول والاغتيالات المأجورة.', baseSusp: 24, humCost: 6, pts: 85, intGain: 13, pubGain: 6, isGlobal: true, portrait: 'criminal', news: 'صدمة استخباراتية دولية: وفاة الكونتيسة فَالِيرَا داخل قصرها المحصن!' },
+      { id: 'g_krug', name: 'الجنرال كْرُوغ', title: 'قائد المرتزقة المظلم (عالمي)', district: 'port', desc: 'يرأس جيشاً سرياً ينفذ عمليات قذرة حول العالم.', baseSusp: 25, humCost: 6, pts: 90, intGain: 13, pubGain: 7, isGlobal: true, portrait: 'criminal', news: 'تفكك جيش المرتزقة السري بعد وفاة الجنرال كْرُوغ المفاجئة!' },
+      { id: 'g_zero', name: 'الملياردير زِيرُو', title: 'مهندس الشبكة المظلمة (عالمي)', district: 'university', desc: 'يدير أكبر سوق إلكتروني للجرائم في العالم.', baseSusp: 25, humCost: 6, pts: 95, intGain: 14, pubGain: 8, isGlobal: true, portrait: 'criminal', news: 'إغلاق أكبر سوق للجرائم الإلكترونية في العالم عقب وفاة «زِيرُو»!' },
+      { id: 'g_morgana', name: 'الدكتورة مُورْغَانَا', title: 'رأس تجارة السموم المحرمة (عالمي)', district: 'university', desc: 'تجري تجارب بيولوجية سرية وتبيع سموماً للعصابات.', baseSusp: 24, humCost: 6, pts: 95, intGain: 14, pubGain: 8, isGlobal: true, portrait: 'criminal', news: 'نهاية مختبرات الظل الدولية بعد العثور على الدكتورة مُورْغَانَا ميتة!' },
+      { id: 'g_orion', name: 'الشبح أُورْيُون', title: 'قاتل مأجور دولي (عالمي)', district: 'cafe', desc: 'أخطر قاتل محترف لم يترك دليلاً طوال عشرين عاماً.', baseSusp: 25, humCost: 5, pts: 100, intGain: 15, pubGain: 7, isGlobal: true, portrait: 'criminal', news: 'الإنتربول في ذهول: وفاة القاتل الأسطوري «الشبح أُورْيُون» بسكتة قلبية!' },
+      { id: 'g_harris', name: 'القاضي الدولي هَارِيس', title: 'حامي الكارتلات العالمية (عالمي)', district: 'court', desc: 'يُفشل الملاحقات الدولية ضد زعماء الجريمة مقابل رشاوى.', baseSusp: 26, humCost: 7, pts: 105, intGain: 15, pubGain: 9, isGlobal: true, portrait: 'criminal', news: 'وفاة القاضي الدولي هَارِيس تعيد فتح مئات الملفات المجمدة عالمياً!' },
+      { id: 'g_dante', name: 'الزعيم دَانْتِي', title: 'إمبراطور الكارتل البحري (عالمي)', district: 'port', desc: 'يتحكم بأساطيل التهريب العابرة للمحيطات.', baseSusp: 26, humCost: 6, pts: 110, intGain: 16, pubGain: 7, isGlobal: true, portrait: 'criminal', news: 'سقوط إمبراطورية التهريب البحرية بعد وفاة الزعيم دَانْتِي!' },
+      { id: 'g_atlas', name: 'الممول أَطْلَس', title: 'عراب الصفقات السوداء (عالمي)', district: 'court', desc: 'الوسيط السري الذي يجمع عصابات العالم تحت مظلة واحدة.', baseSusp: 27, humCost: 7, pts: 115, intGain: 16, pubGain: 8, isGlobal: true, portrait: 'criminal', news: 'العالم يهمس باسم حاكم زالفورا بعد سقوط الممول الخفي أَطْلَس!' },
+      { id: 'g_vex', name: 'المطارد فِيكْس', title: 'رئيس التحالف الدولي للمحققين (عالمي)', district: 'police', desc: 'المحقق الأخطر الذي جاء ليصطادك بعد سيرو فان.', baseSusp: 32, humCost: 14, pts: 130, intGain: 20, pubGain: -10, isGlobal: true, portrait: 'vex', news: 'صدمة دولية غير مسبوقة: وفاة المحقق الدولي «فِيكْس» أثناء مطاردته لحاكم زالفورا!' },
+      { id: 'g_nyx', name: 'اللورد نِيكْس', title: 'العقل المدبر للتحالف المظلم (عالمي)', district: 'court', desc: 'الزعيم الأعلى لأكبر منظمة إجرامية في الكوكب.', baseSusp: 30, humCost: 8, pts: 150, intGain: 25, pubGain: 12, isGlobal: true, portrait: 'criminal', news: 'النظام العالمي الجديد: سقوط اللورد نِيكْس يعلن بداية عصر حاكم الظل بلا منازع!' }
+    ];
+
+    const ROOM_UPGRADES = [
+      { level: 1, title: 'المستوى 1: التخفي والحبر السري', items: 'درج سري مزدوج + قلم الحبر السري ومصباح UV.', benefit: 'يفتح قلم UV ومصباح الأرشيف ويقلل الشك 15% في كل عملية.', cost: 30 },
+      { level: 2, title: 'المستوى 2: المراقبة المضادة', items: 'كاشف كاميرات وتنصت + جهاز تشويش ميكروفونات.', benefit: 'يحبط مراقبة سيرو فان ويمنحك +15 ذكاء وتمويه.', cost: 55 },
+      { level: 3, title: 'المستوى 3: الخداع الرقمي', items: 'خزنة ببصمة حرارة + مزوّر GPS وسجل الإنترنت.', benefit: 'يفتح تفاصيل لوحة تحقيق سيرو الكاملة ويخفض الشك فوراً بـ 20%.', cost: 85 },
+      { level: 4, title: 'المستوى 4: مخبأ الحاكم (مستوى الشبح)', items: 'غرفة سرية خلف المكتبة + نظام إنذار مبكر للمداهمات.', benefit: 'حصانة تامة ضد تفتيش ريكس هارون، وشك العمليات ينخفض للنصف!', cost: 120 }
+    ];
+
+    const ACHIEVEMENTS = [
+      { id: 'first_blood', icon: '✍️', name: 'الاسم الأول', desc: 'كتابة أول اسم في مفكرة زالفورا.' },
+      { id: 'unmasker', icon: '🎭', name: 'صائد الأقنعة', desc: 'كشف اسم مستعار حقيقي عبر لوكاس أو مايا.' },
+      { id: 'uv_ghost', icon: '🔦', name: 'الحبر الخفي', desc: 'الكتابة بقلم الأشعة فوق البنفسجية (UV).' },
+      { id: 'survivor', icon: '⚖️', name: 'خارج الشبهات', desc: 'النجاة من غرفة الاستجواب وجهاز كشف الكذب.' },
+      { id: 'cctv_hacker', icon: '💻', name: 'شبح الكاميرات', desc: 'الفوز في تحدي مسح تسجيل الكاميرا مع لوكاس.' },
+      { id: 'fortress', icon: '🔐', name: 'مخبأ الشبح', desc: 'تطوير الغرفة السرية إلى المستوى 4 الكامل.' },
+      { id: 'cold_heart', icon: '❄️', name: 'قلب من جليد', desc: 'الوصول بمؤشر الإنسانية إلى 30% أو أقل.' },
+      { id: 'copycat_end', icon: '☠️', name: 'حاكم واحد فقط', desc: 'القضاء على المقلّد المجنون كاين فاليري.' },
+      { id: 'ruler_era', icon: '👑', name: 'حاكم العالم الجديد', desc: 'الدخول إلى عصر حاكم العالم الجديد بعد نهاية القصة.' }
+    ];
+
+    const FOLLOWERS_DEF = [
+      { id: 'hacker', icon: '💻', name: 'الهاكر المجهول «زِد»', role: 'يمسح آثارك الرقمية ويخفض الشك (-18%).', cost: 60, actionLabel: '🛡️ تضليل رقمي (-18% شك)' },
+      { id: 'lawyer', icon: '⚖️', name: 'المحامي الفاسد «كُول»', role: 'يرتب لك صفقات نفوذ وحجج غياب (+45 نقاط +كارت).', cost: 75, actionLabel: '💼 جلب نفوذ وحجة غياب' },
+      { id: 'officer', icon: '🚔', name: 'الضابط المأجور «فَانْس»', role: 'يسرب ملفات عالمية جديدة ويضلل التحالف الدولي.', cost: 90, actionLabel: '🌍 تسريب ملف عالمي + خفض شك' }
+    ];
+
+    /* ==========================================================
+       6. GAME STATE & SAVE/LOAD (3 SLOTS)
+       ========================================================== */
+    const AUTO_SAVE_KEY = 'zalvora_autosave_v3';
+    const SLOT_PREFIX = 'zalvora_slot_v3_';
+
+    function getDefaultState() {
+      return {
+        welcomeSeen: false,
+        introDone: false,
+        day: 1,
+        suspicion: 5,
+        humanity: 85,
+        intellect: 20,
+        publicOpinion: 60,
+        points: 40,
+        roomLevel: 0,
+        selectedPen: 'classic',
+        activeSkin: 'classic',
+        ownedSkins: ['classic'],
+        archiveUVOn: false,
+        writtenTargets: [],
+        archive: [],
+        unlockedTargets: ['falcon', 'kross', 'scorpion'],
+        unmaskedIds: [],
+        proceduralTargets: [],
+        procCounter: 1,
+        alibis: { family: 2, arthur: 1, lucas: 1 },
+        interrogationsSurvived: 0,
+        rulerMode: false,
+        followersOwned: [],
+        followerLastUsed: {},
+        achievements: [],
+        phoneMessages: [
+          { id: 'm0', from: 'لُوكَاس', text: 'راين! سمعت عن براءة فَالْكُون... لو احتجت كشف اسم المجرم الملقب بـ «العقرب» كلمني في تبويب الشخصيات.', handled: true }
+        ],
+        unreadPhone: 0,
+        actionTurn: 0,
+        lastTalkTurn: {},
+        disinfoCount: 0,
+        newsLog: [
+          'فَالْكُون زعيم مافيا الميناء يخرج بريئاً من المحكمة وسط غضب شعبي عارم...',
+          'شرطة زالفورا ترفع حالة الاستنفار والمحقق سيرو فان يصل إلى المدينة...',
+          'أنباء عن مجرم غامض يُلقب بـ «العقرب» يدير التهريب في الميناء القديم...'
+        ],
+        conscienceMsg: 'المفكرة أمامك يا راين... تذكر أنك درست القانون للعدالة، لا لتصبح قاضياً وجلاداً في لحظة واحدة.'
+      };
+    }
+
+    let state = getDefaultState();
+    let introIdx = 0;
+    let introTimer = null;
+    let isWriting = false;
+    let cdTimer = null;
+    let cdSeconds = 40;
+    let pendingBroadcast = null;
+
+    function getAllTargets() {
+      return [...BASE_TARGETS, ...(state.proceduralTargets || [])];
+    }
+
+    function saveAuto() {
+      SafeStorage.set(AUTO_SAVE_KEY, JSON.stringify(state));
+    }
+
+    function loadAuto() {
+      const raw = SafeStorage.get(AUTO_SAVE_KEY);
+      if (raw) {
+        try {
+          const p = JSON.parse(raw);
+          state = Object.assign(getDefaultState(), p);
+          state.alibis = Object.assign({ family: 2, arthur: 1, lucas: 1 }, p.alibis || {});
+        } catch (e) { state = getDefaultState(); }
+      }
+    }
+
+    /* ==========================================================
+       7. UI HELPERS, MODALS, TOASTS & ACHIEVEMENTS
+       ========================================================== */
+    function showToast(msg, type = 'info') {
+      const box = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const styles = {
+        info: 'bg-[#121828] border-slate-600 text-slate-100',
+        success: 'bg-emerald-950/95 border-emerald-500/70 text-emerald-100',
+        danger: 'bg-red-950/95 border-red-500/75 text-red-100',
+        warning: 'bg-amber-950/95 border-amber-500/75 text-amber-100'
+      };
+      el.className = `pointer-events-auto border rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold shadow-2xl transition-all duration-300 ${styles[type] || styles.info}`;
+      el.textContent = msg;
+      box.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0'; el.style.transform = 'translateY(8px)';
+        setTimeout(() => el.remove(), 300);
+      }, 3600);
+    }
+
+    function openOverlay(id) {
+      const el = document.getElementById(id);
+      if (el) { el.classList.remove('hidden'); el.classList.add('flex'); }
+    }
+    function closeOverlay(id) {
+      const el = document.getElementById(id);
+      if (el) { el.classList.add('hidden'); el.classList.remove('flex'); }
+    }
+
+    function openModal(title, body, buttons) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-body').textContent = body;
+      const act = document.getElementById('modal-actions');
+      act.innerHTML = '';
+      buttons.forEach(btn => {
+        const b = document.createElement('button');
+        b.className = btn.primary ? 'btn-crimson px-4 py-2 rounded-xl text-xs font-extrabold text-white' : 'btn-dark px-4 py-2 rounded-xl text-xs font-bold text-slate-300';
+        b.textContent = btn.label;
+        b.onclick = () => { closeOverlay('custom-modal'); if (btn.onClick) btn.onClick(); };
+        act.appendChild(b);
+      });
+      openOverlay('custom-modal');
+    }
+
+    function openWelcomeModal(canClose) {
+      document.getElementById('welcome-close-btn').classList.toggle('hidden', !canClose);
+      openOverlay('welcome-modal');
+    }
+    function closeWelcomeModal() {
+      AudioEngine.playClick();
+      closeOverlay('welcome-modal');
+    }
+    function startFromWelcome() {
+      AudioEngine.init();
+      AudioEngine.startRain();
+      AudioEngine.playClick();
+      state.welcomeSeen = true;
+      saveAuto();
+      closeOverlay('welcome-modal');
+    }
+
+    function toggleStatTooltip(el) {
+      const open = el.classList.contains('tip-open');
+      document.querySelectorAll('.stat-tip-wrap.tip-open').forEach(n => n.classList.remove('tip-open'));
+      if (!open) el.classList.add('tip-open');
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.stat-tip-wrap')) {
+        document.querySelectorAll('.stat-tip-wrap.tip-open').forEach(n => n.classList.remove('tip-open'));
+      }
+    });
+
+    function unlockAchievement(id) {
+      if (state.achievements.includes(id)) return;
+      const a = ACHIEVEMENTS.find(x => x.id === id);
+      if (!a) return;
+      state.achievements.push(id);
+      state.points += 15;
+      showToast(`🏆 وسام جديد: ${a.icon} ${a.name} (+15 نقاط)`, 'warning');
+      saveAuto();
+    }
+
+    function openAchievementsModal() {
+      AudioEngine.playClick();
+      document.getElementById('ach-progress-text').textContent = `تم فتح ${state.achievements.length} من ${ACHIEVEMENTS.length} أوسمة`;
+      const grid = document.getElementById('achievements-grid');
+      grid.innerHTML = ACHIEVEMENTS.map(a => {
+        const got = state.achievements.includes(a.id);
+        return `<div class="p-3.5 rounded-2xl border ${got ? 'bg-amber-950/30 border-amber-500/60' : 'bg-[#0b101b] border-slate-800 opacity-55'} flex items-center gap-3">
+          <div class="text-2xl">${a.icon}</div>
+          <div>
+            <div class="font-extrabold text-sm ${got ? 'text-amber-300' : 'text-slate-400'}">${a.name} ${got ? '✓' : '🔒'}</div>
+            <div class="text-xs text-slate-300">${a.desc}</div>
+          </div>
+        </div>`;
+      }).join('');
+      openOverlay('achievements-modal');
+    }
+
+    function openSaveModal() {
+      AudioEngine.playClick();
+      const box = document.getElementById('save-slots-list');
+      box.innerHTML = [1, 2, 3].map(slot => {
+        const raw = SafeStorage.get(SLOT_PREFIX + slot);
+        let info = 'خانة فارغة';
+        if (raw) {
+          try {
+            const d = JSON.parse(raw);
+            info = `اليوم ${d.day} • الشك ${d.suspicion}% • أسماء: ${(d.archive || []).length}${d.rulerMode ? ' • 👑 الحاكم' : ''}`;
+          } catch (e) {}
+        }
+        return `<div class="bg-[#121929] border border-slate-800 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div class="font-extrabold text-sm text-white">خانة الحفظ #${slot}</div>
+            <div class="text-xs text-slate-400">${info}</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="saveToSlot(${slot})" class="btn-crimson px-3 py-1.5 rounded-xl text-xs font-extrabold text-white">💾 حفظ</button>
+            <button onclick="loadFromSlot(${slot})" ${raw ? '' : 'disabled'} class="btn-dark px-3 py-1.5 rounded-xl text-xs font-bold text-sky-300">📂 تحميل</button>
+          </div>
+        </div>`;
+      }).join('');
+      openOverlay('save-modal');
+    }
+
+    function saveToSlot(slot) {
+      AudioEngine.playClick();
+      SafeStorage.set(SLOT_PREFIX + slot, JSON.stringify(state));
+      showToast(`💾 تم حفظ تقدمك في الخانة #${slot} بنجاح!`, 'success');
+      openSaveModal();
+    }
+    function loadFromSlot(slot) {
+      AudioEngine.playClick();
+      const raw = SafeStorage.get(SLOT_PREFIX + slot);
+      if (!raw) return;
+      try {
+        state = Object.assign(getDefaultState(), JSON.parse(raw));
+        saveAuto();
+        closeOverlay('save-modal');
+        enterHub();
+        showToast(`📂 تم تحميل الخانة #${slot} بنجاح!`, 'success');
+      } catch (e) {}
+    }
+
+    /* ==========================================================
+       8. CINEMATIC INTRO LOGIC
+       ========================================================== */
+    function renderIntro(idx) {
+      const s = INTRO_SCENES[idx];
+      document.getElementById('intro-art').innerHTML = s.svg;
+      document.getElementById('intro-badge').textContent = s.badge;
+      document.getElementById('intro-location').textContent = s.location;
+      const txtEl = document.getElementById('intro-text');
+      txtEl.textContent = '';
+      clearInterval(introTimer);
+      let i = 0;
+      introTimer = setInterval(() => {
+        txtEl.textContent += s.text[i];
+        i++;
+        if (i >= s.text.length) clearInterval(introTimer);
+      }, 22);
+
+      const last = idx === INTRO_SCENES.length - 1;
+      document.getElementById('intro-next-wrap').classList.toggle('hidden', last);
+      document.getElementById('intro-choices').classList.toggle('hidden', !last);
+      const cBox = document.getElementById('intro-conscience-box');
+      if (last) {
+        cBox.classList.remove('hidden');
+        document.getElementById('intro-conscience-portrait').innerHTML = getPortraitSVG('conscience', 'normal');
+        document.getElementById('intro-conscience-msg').textContent = '«لحظة واحدة فقط تفصل بين خريج القانون... وحاكم الظل يا راين.»';
+      } else {
+        cBox.classList.add('hidden');
+      }
+    }
+
+    function nextIntroScene() {
+      AudioEngine.startRain(); AudioEngine.playClick();
+      if (introIdx < INTRO_SCENES.length - 1) { introIdx++; renderIntro(introIdx); }
+    }
+
+    function skipIntro() {
+      AudioEngine.startRain(); AudioEngine.playClick();
+      clearInterval(introTimer);
+      state.introDone = true; saveAuto(); enterHub();
+    }
+
+    function finishIntro(choice) {
+      AudioEngine.startRain(); AudioEngine.playClick();
+      clearInterval(introTimer);
+      state.introDone = true;
+      if (choice === 'test') {
+        state.points += 10; state.humanity = Math.max(0, state.humanity - 5);
+        state.conscienceMsg = 'اندفاعك سريع يا راين! اختر القلم وحجة الغياب قبل أن تكتب اسم فَالْكُون.';
+      } else {
+        state.intellect += 8;
+        state.conscienceMsg = 'حذرٌ ذكي. اجمع حجج غيابك من العيلة والأصدقاء وراقب خريطة زالفورا.';
+      }
+      saveAuto(); enterHub();
+    }
+
+    function enterHub() {
+      document.getElementById('screen-intro').classList.add('hidden');
+      document.getElementById('screen-ending').classList.add('hidden');
+      document.getElementById('screen-interrogation').classList.add('hidden');
+      document.getElementById('screen-hub').classList.remove('hidden');
+      document.getElementById('hud-rayn-portrait').innerHTML = getPortraitSVG('rayn');
+      updateAllUI();
+    }
+
+    /* ==========================================================
+       9. MAIN HUB UI RENDERING & TABS
+       ========================================================== */
+    function switchTab(tab) {
+      AudioEngine.playClick();
+      ['notebook', 'characters', 'room', 'map', 'phone', 'followers'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('hidden', t !== tab);
+        document.getElementById('tab-btn-' + t).classList.toggle('tab-active', t === tab);
+      });
+      if (tab === 'characters') renderCharacters();
+      if (tab === 'room') renderRoomUpgrades();
+      if (tab === 'map') renderMapAndBoard();
+      if (tab === 'phone') { state.unreadPhone = 0; updatePhoneBadge(); renderPhone(); }
+      if (tab === 'followers') renderFollowers();
+    }
+
+    function switchNotebookSub(sub) {
+      AudioEngine.playClick();
+      ['write', 'archive', 'skins'].forEach(s => {
+        document.getElementById('nb-view-' + s).classList.toggle('hidden', s !== sub);
+        document.getElementById('nb-sub-' + s).classList.toggle('tab-active', s === sub);
+      });
+      if (sub === 'archive') renderArchive();
+      if (sub === 'skins') renderSkins();
+    }
+
+    function updateAllUI() {
+      state.suspicion = Math.min(100, Math.max(0, Math.round(state.suspicion)));
+      state.humanity = Math.min(100, Math.max(0, Math.round(state.humanity)));
+      state.publicOpinion = Math.min(100, Math.max(0, Math.round(state.publicOpinion)));
+
+      document.getElementById('stat-susp-val').textContent = state.suspicion + '%';
+      document.getElementById('stat-susp-bar').style.width = state.suspicion + '%';
+      document.getElementById('stat-hum-val').textContent = state.humanity + '%';
+      document.getElementById('stat-hum-bar').style.width = state.humanity + '%';
+      document.getElementById('stat-int-val').textContent = state.intellect;
+      document.getElementById('stat-pts-val').textContent = state.points;
+      document.getElementById('room-pts-display').textContent = state.points;
+
+      const pubLabel = state.publicOpinion >= 60 ? 'منقذ' : (state.publicOpinion >= 35 ? 'متذبذب' : 'طاغية');
+      document.getElementById('stat-pub-val').textContent = `${pubLabel} (${state.publicOpinion})`;
+      document.getElementById('hud-day-badge').textContent = state.rulerMode ? `اليوم ${state.day} — 👑 الحاكم` : `اليوم ${state.day}`;
+      document.getElementById('room-level-pill').textContent = `🔐 غرفة ${state.roomLevel}/4`;
+      document.getElementById('survived-badge').textContent = `استجوابات: ${state.interrogationsSurvived}`;
+      document.getElementById('archive-count').textContent = state.archive.length;
+      document.getElementById('nb-page-num').textContent = state.archive.length + 1;
+      document.getElementById('btn-gen-global').classList.toggle('hidden', !state.rulerMode);
+
+      // Apply active notebook skin
+      const nbContainer = document.getElementById('tab-notebook');
+      nbContainer.className = `${(NOTEBOOK_SKINS.find(s => s.id === state.activeSkin) || NOTEBOOK_SKINS[0]).css} rounded-3xl p-4 sm:p-6 shadow-2xl ${nbContainer.classList.contains('hidden') ? 'hidden' : ''}`;
+      document.getElementById('notebook-live-page').classList.toggle('vintage-paper', state.activeSkin === 'vintage');
+
+      // Breaking news ticker
+      document.getElementById('breaking-news-ticker').textContent = state.newsLog.slice(0, 6).join('     ✦     ');
+
+      renderConscience();
+      renderAlibiSummary();
+      renderDirective();
+      renderPens();
+      renderTargetsDropdown();
+      renderAlibiDropdown();
+      updatePhoneBadge();
+
+      document.getElementById('burn-btn-wrap').classList.toggle('hidden', state.rulerMode || state.writtenTargets.length < 2);
+    }
+
+    function renderConscience() {
+      const h = state.humanity;
+      const mood = h >= 65 ? 'normal' : (h >= 35 ? 'sarcastic' : 'cold');
+      const moodText = mood === 'normal' ? 'نبرة حذِرة — إنسانية عالية' : (mood === 'sarcastic' ? 'نبرة ساخرة — يختبر نواياك' : 'نبرة باردة ومرعبة — إنسانية منهارة');
+      const moodColor = mood === 'normal' ? 'text-sky-400' : (mood === 'sarcastic' ? 'text-amber-400' : 'text-red-400');
+      document.getElementById('conscience-portrait').innerHTML = getPortraitSVG('conscience', mood);
+      const mEl = document.getElementById('conscience-mood');
+      mEl.textContent = moodText;
+      mEl.className = 'text-[11px] font-bold ' + moodColor;
+      document.getElementById('conscience-msg').textContent = `"${state.conscienceMsg}"`;
+    }
+
+    function renderAlibiSummary() {
+      document.getElementById('alibi-summary-grid').innerHTML = `
+        <div class="bg-[#090d16] border border-slate-800 rounded-xl p-2 flex justify-between"><span>🏠 العيلة</span><strong class="text-sky-400">${state.alibis.family}</strong></div>
+        <div class="bg-[#090d16] border border-slate-800 rounded-xl p-2 flex justify-between"><span>☕ كافيه آرثر</span><strong class="text-amber-400">${state.alibis.arthur}</strong></div>
+        <div class="bg-[#090d16] border border-slate-800 rounded-xl p-2 flex justify-between"><span>💻 بث لوكاس</span><strong class="text-emerald-400">${state.alibis.lucas}</strong></div>
+        <div class="bg-[#090d16] border border-slate-800 rounded-xl p-2 flex justify-between"><span>☕ قهوة سيرو</span><strong class="${state.intellect >= 45 ? 'text-purple-400' : 'text-slate-500'}">${state.intellect >= 45 ? 'متاح ✓' : 'ذكاء 45'}</strong></div>
+      `;
+    }
+
+    function renderDirective() {
+      const el = document.getElementById('directive-text');
+      if (state.rulerMode) {
+        const rem = getAllTargets().filter(t => t.isGlobal && !state.writtenTargets.includes(t.id)).length;
+        el.textContent = `أنت تحكم العالم من الظل! لديك ${rem} هدفاً عالمياً مفتوحاً، ويمكنك توليد ملفات جديدة بلا نهاية وإدارة «شبكة الأتباع».`;
+      } else if (!state.writtenTargets.includes('falcon')) {
+        el.textContent = 'ابدأ بكتابة اسم «فَالْكُون» أو «الدكتور كْرُوس» مع حجة غياب، أو اطلب من لوكاس كشف الاسم الحقيقي لـ «العقرب».';
+      } else if (state.unlockedTargets.includes('cain') && !state.unmaskedIds.includes('cain')) {
+        el.textContent = '⚠️ ظهر «المقلّد المجنون»! اذهب لتبويب «الشخصيات» وتحدث مع مَايَا لكشف اسمه الحقيقي وكتابته في المفكرة.';
+      } else if (state.unlockedTargets.includes('force') && !state.writtenTargets.includes('force')) {
+        el.textContent = '👑 ملف «السيناتور فُورْس» مفتوح الآن! إسقاطه يمنحك السيطرة الكاملة على زالفورا ويفتح النهاية الكبرى.';
+      } else {
+        el.textContent = 'واصل تصفية رؤوس الفساد، طوّر غرفتك السرية حتى المستوى 4، وراقب موبايلك وخريطة زالفورا.';
+      }
+    }
+
+    function updatePhoneBadge() {
+      const b = document.getElementById('phone-badge');
+      b.classList.toggle('hidden', state.unreadPhone <= 0);
+      b.textContent = state.unreadPhone;
+    }
+
+    /* ==========================================================
+       10. NOTEBOOK: PENS, TARGETS, WRITING, 40s COUNTDOWN & TV
+       ========================================================== */
+    function renderPens() {
+      const box = document.getElementById('pen-selector');
+      box.innerHTML = '';
+      PENS.forEach(p => {
+        const unlocked = state.roomLevel >= p.reqRoom;
+        const active = state.selectedPen === p.id;
+        const btn = document.createElement('button');
+        btn.disabled = !unlocked;
+        btn.className = `w-full text-right p-2 rounded-xl border text-xs transition ${
+          active ? 'bg-red-950/45 border-red-500 text-white' :
+          unlocked ? 'bg-[#141b2b] border-slate-800 text-slate-300 hover:border-slate-600' :
+          'bg-[#0a0d14] border-slate-900 text-slate-500 opacity-55'
+        }`;
+        btn.innerHTML = `<div class="flex justify-between font-extrabold"><span>${p.name}</span><span>${!unlocked ? '🔒 غرفة 1' : (active ? '✓' : '')}</span></div><div class="text-[11px] opacity-75 mt-0.5">${p.desc}</div>`;
+        btn.onclick = () => { AudioEngine.playClick(); state.selectedPen = p.id; saveAuto(); renderPens(); };
+        box.appendChild(btn);
+      });
+      const cur = PENS.find(p => p.id === state.selectedPen) || PENS[0];
+      document.getElementById('nb-pen-label').textContent = 'القلم: ' + cur.name;
+    }
+
+    function isTargetMasked(t) {
+      return Boolean(t.alias && !state.unmaskedIds.includes(t.id));
+    }
+
+    function renderTargetsDropdown() {
+      const sel = document.getElementById('target-select');
+      const prev = sel.value;
+      sel.innerHTML = '';
+      const open = getAllTargets().filter(t => state.unlockedTargets.includes(t.id) && !state.writtenTargets.includes(t.id));
+      document.getElementById('open-targets-count').textContent = open.length;
+
+      if (open.length === 0) {
+        sel.innerHTML = `<option value="">${state.rulerMode ? 'اضغط «+ فتح ملف عالمي جديد»!' : 'لا توجد أهداف مفتوحة حالياً'}</option>`;
+        document.getElementById('btn-write-name').disabled = true;
+        document.getElementById('target-dossier-info').textContent = state.rulerMode ? 'اضغط زر فتح ملف عالمي جديد أعلى المفكرة!' : 'تحدث مع الشخصيات لفتح ملفات جديدة.';
+        return;
+      }
+
+      open.forEach(t => {
+        const masked = isTargetMasked(t);
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = masked ? `🔒 ${t.alias} — (مجهول الاسم الحقيقي)` : `${t.name} — ${t.title}`;
+        sel.appendChild(opt);
+      });
+      if (open.some(t => t.id === prev)) sel.value = prev;
+      onTargetSelectChange();
+    }
+
+    function onTargetSelectChange() {
+      const id = document.getElementById('target-select').value;
+      const t = getAllTargets().find(x => x.id === id);
+      const info = document.getElementById('target-dossier-info');
+      const btn = document.getElementById('btn-write-name');
+      const warn = document.getElementById('masked-warning-text');
+
+      if (!t) { info.textContent = ''; btn.disabled = true; return; }
+      const masked = isTargetMasked(t);
+      if (masked) {
+        const helper = t.unmaskBy === 'lucas' ? 'لُوكَاس (اختراق)' : 'مَايَا (تحقيق صحفي)';
+        info.innerHTML = `<div class="font-extrabold text-amber-400 mb-1">🔒 ${t.alias}</div><div>${t.desc}</div><div class="mt-1.5 text-sky-400 font-bold">الحل: اذهب لتبويب «الشخصيات» واطلب من ${helper} كشف اسمه الحقيقي!</div>`;
+        btn.disabled = true;
+        warn.textContent = `لا يمكنك كتابة لقب مستعار في المفكرة — اكشف الاسم الحقيقي عبر ${helper} أولاً.`;
+      } else {
+        info.innerHTML = `<div class="font-extrabold text-white mb-0.5">${t.name} <span class="text-red-400">(${t.title})</span></div><div>${t.desc}</div><div class="mt-1.5 flex flex-wrap gap-2 text-[11px]"><span class="text-amber-400">👁️ +${t.pts}</span><span class="text-emerald-400">🧠 +${t.intGain}</span><span class="text-red-400">🚨 شك أساسي +${t.baseSusp}%</span></div>`;
+        btn.disabled = isWriting;
+        warn.textContent = 'تأكد من اختيار شرط ما قبل الموت وحجة غياب قوية قبل الكتابة.';
+      }
+    }
+
+    function renderAlibiDropdown() {
+      const sel = document.getElementById('alibi-select');
+      const prev = sel.value;
+      sel.innerHTML = '';
+      const opts = [
+        { id: 'none', label: 'بدون حجة غياب (خطر شك مرتفع)', ok: true },
+        { id: 'family', label: `🏠 عشا مع العيلة (ماركوس وإيلينا) — متاح ${state.alibis.family}`, ok: state.alibis.family > 0 },
+        { id: 'arthur', label: `☕ كافيه آرثر بالكاميرات — متاح ${state.alibis.arthur}`, ok: state.alibis.arthur > 0 },
+        { id: 'lucas', label: `💻 بث مباشر مع لوكاس — متاح ${state.alibis.lucas}`, ok: state.alibis.lucas > 0 },
+        { id: 'siro', label: `☕ قهوة مع المحقق سيرو فان (${state.intellect >= 45 ? 'متاح - أقوى حجة!' : 'يتطلب ذكاء 45'})`, ok: state.intellect >= 45 }
+      ];
+      opts.forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o.id; opt.textContent = o.label; opt.disabled = !o.ok;
+        sel.appendChild(opt);
+      });
+      if (opts.some(o => o.id === prev && o.ok)) sel.value = prev;
+      else {
+        const best = opts.find(o => o.id !== 'none' && o.ok);
+        sel.value = best ? best.id : 'none';
+      }
+    }
+
+    function executeWriteName() {
+      if (isWriting) return;
+      const targetId = document.getElementById('target-select').value;
+      const target = getAllTargets().find(t => t.id === targetId);
+      if (!target || isTargetMasked(target)) return;
+
+      const pen = PENS.find(p => p.id === state.selectedPen) || PENS[0];
+      const methodVal = document.getElementById('method-select').value;
+      const timingVal = document.getElementById('timing-select').value;
+      const condVal = document.getElementById('condition-select').value;
+      const alibiVal = document.getElementById('alibi-select').value;
+
+      isWriting = true;
+      document.getElementById('btn-write-name').disabled = true;
+      document.getElementById('nb-status-text').textContent = 'جاري خطّ الاسم في المفكرة...';
+      document.getElementById('svg-pen-body').setAttribute('fill', pen.body);
+      document.getElementById('svg-pen-tip').setAttribute('fill', pen.color);
+
+      const hand = document.getElementById('writing-hand-svg');
+      const nameEl = document.getElementById('notebook-written-name');
+      const metaEl = document.getElementById('notebook-written-meta');
+      const paper = document.getElementById('notebook-live-page');
+
+      nameEl.textContent = target.name;
+      nameEl.style.color = pen.id === 'uv' ? '#38bdf8' : pen.color;
+      nameEl.style.textShadow = pen.id === 'uv' ? '0 0 14px rgba(56,189,248,0.95)' : 'none';
+      metaEl.textContent = '';
+      paper.classList.toggle('uv-mode', pen.id === 'uv');
+
+      hand.classList.remove('hand-writing-active');
+      nameEl.classList.remove('ink-wipe-reveal');
+      void hand.offsetWidth;
+      hand.classList.add('hand-writing-active');
+      nameEl.classList.add('ink-wipe-reveal');
+      AudioEngine.playPenScratch();
+
+      setTimeout(() => {
+        isWriting = false;
+        paper.classList.remove('uv-mode');
+        document.getElementById('nb-status-text').textContent = 'جفّ الحبر — بدأ عدّاد الـ 40 ثانية!';
+
+        // Compute outcomes
+        let methodLabel = 'سكتة قلبية طبيعية', mSusp = 0, mPts = 0, mPub = 0;
+        if (methodVal === 'accident') { methodLabel = 'حادث غامض'; mSusp = 6; mPts = 12; }
+        else if (methodVal === 'confess') { methodLabel = 'اعتراف علني بالفساد ثم انهيار'; mSusp = 10; mPts = 25; mPub = 8; }
+
+        let condLabel = 'بدون شرط إضافي', cSusp = 0, cPts = 0, cPub = 0;
+        if (condVal === 'mislead') { condLabel = 'ترك رسالة تضليل للشرطة'; cSusp = -8; state.disinfoCount++; }
+        else if (condVal === 'snitch') { condLabel = 'اعتراف على عصابة أخرى'; cSusp = -5; cPts = 10; state.disinfoCount++; }
+        else if (condVal === 'donate') { condLabel = 'تبرع بالأموال المسروقة للفقراء'; cPub = 10; }
+
+        let alibiLabel = 'بدون حجة غياب', aRed = 0;
+        if (alibiVal === 'family' && state.alibis.family > 0) { state.alibis.family--; alibiLabel = 'عشا مع العيلة (ماركوس وإيلينا)'; aRed = 13; }
+        else if (alibiVal === 'arthur' && state.alibis.arthur > 0) { state.alibis.arthur--; alibiLabel = 'كاميرا كافيه آرثر'; aRed = 15; }
+        else if (alibiVal === 'lucas' && state.alibis.lucas > 0) { state.alibis.lucas--; alibiLabel = 'بث مباشر مع لوكاس'; aRed = 16; }
+        else if (alibiVal === 'siro' && state.intellect >= 45) { alibiLabel = 'قهوة مع المحقق سيرو فان'; aRed = 24; }
+
+        const roomFactor = state.roomLevel >= 4 ? 0.5 : state.roomLevel === 3 ? 0.65 : state.roomLevel === 2 ? 0.78 : state.roomLevel === 1 ? 0.85 : 1.0;
+        const pubMod = state.publicOpinion < 35 ? 6 : (state.publicOpinion >= 70 ? -4 : 0);
+
+        let suspDelta = 0;
+        if (target.isBrother) {
+          suspDelta = 0;
+          methodLabel = 'سكتة قلبية طبيعية (0% شبهة)';
+          state.alibis.family += 1;
+        } else {
+          const raw = target.baseSusp + mSusp + pen.suspMod + cSusp + pubMod - aRed;
+          suspDelta = Math.max(2, Math.round(raw * roomFactor));
+        }
+
+        const ptsDelta = target.pts + mPts + pen.ptsMod + cPts;
+        const pubDelta = (target.pubGain || 5) + mPub + cPub;
+        const humDelta = -target.humCost;
+
+        state.suspicion = Math.min(100, Math.max(0, state.suspicion + suspDelta));
+        state.humanity = Math.max(0, state.humanity + humDelta);
+        state.points += ptsDelta;
+        state.intellect += target.intGain;
+        state.publicOpinion = Math.min(100, Math.max(0, state.publicOpinion + pubDelta));
+        state.writtenTargets.push(target.id);
+        state.actionTurn++;
+        state.day++;
+
+        const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        state.archive.unshift({
+          name: target.name, title: target.title, penId: pen.id, penName: pen.name, penColor: pen.color,
+          methodLabel, condLabel, timingVal, alibiLabel, timeStr
+        });
+        metaEl.textContent = `${methodLabel} • ${alibiLabel}`;
+
+        state.newsLog.unshift(target.news);
+
+        // Conscience dynamic reaction
+        if (target.isBrother) {
+          state.conscienceMsg = 'كتبت اسم أخيك دَامِيَان بدم بارد! العيلة تبكي بجانبك ولا تشك بك لحظة... لكن دموعك المزيفة في العزاء ستطاردك للأبد!';
+        } else if (target.isCopycat) {
+          state.conscienceMsg = 'تخلصت من المقلّد المجنون كاين فاليري! لا مكان في زالفورا إلا لحاكم ظل واحد.';
+        } else if (state.humanity >= 65) {
+          state.conscienceMsg = `سقط ${target.name}. أسألك بصدق يا راين: هل ما زلت تفعل هذا للعدالة أم أن القوة بدأت تُغريك؟`;
+        } else if (state.humanity >= 35) {
+          state.conscienceMsg = `تنفيذ متقن ضد ${target.name}! لكن قل لي ساخراً: كم بقي من الطالب الطيب الذي تخرج من الجامعة؟`;
+        } else {
+          state.conscienceMsg = `عظيم! العالم يرتجف تحت سن قلمك. لا تتردد... من الهدف التالي؟`;
+        }
+
+        // Story progression & Achievements
+        unlockAchievement('first_blood');
+        if (pen.id === 'uv') unlockAchievement('uv_ghost');
+        if (state.humanity <= 30) unlockAchievement('cold_heart');
+        if (target.isCopycat) unlockAchievement('copycat_end');
+        progressStoryUnlocks();
+
+        if (state.rulerMode) {
+          const rem = getAllTargets().filter(t => state.unlockedTargets.includes(t.id) && !state.writtenTargets.includes(t.id));
+          if (rem.length === 0) generateGlobalTarget(true);
+        }
+
+        // Random phone event chance
+        if (Math.random() < 0.45) pushRandomPhoneMessage(true);
+
+        pendingBroadcast = { target, methodLabel, condLabel, suspDelta, humDelta, ptsDelta, pubDelta };
+        saveAuto();
+        updateAllUI();
+        start40sCountdown(target.name, `${methodLabel} — ${timingVal}`);
+      }, 2450);
+    }
+
+    function progressStoryUnlocks() {
+      const c = state.writtenTargets.length;
+      if (c >= 1) { unlockTarget('marco'); unlockTarget('professor'); }
+      if (c >= 2) { unlockTarget('zander'); unlockTarget('selena'); unlockTarget('cain'); }
+      if (c >= 4) { unlockTarget('victor'); unlockTarget('damian'); }
+      if (c >= 5) { unlockTarget('force'); }
+    }
+
+    function unlockTarget(id) {
+      if (!state.unlockedTargets.includes(id)) state.unlockedTargets.push(id);
+    }
+
+    function start40sCountdown(name, methodStr) {
+      clearInterval(cdTimer);
+      cdSeconds = 40;
+      document.getElementById('cd-target-name').textContent = name;
+      document.getElementById('cd-method-text').textContent = methodStr;
+      updateCountdownRing();
+      openOverlay('countdown-overlay');
+
+      cdTimer = setInterval(() => {
+        cdSeconds--;
+        AudioEngine.playClockHeartbeat(cdSeconds <= 10);
+        updateCountdownRing();
+        if (cdSeconds <= 0) {
+          clearInterval(cdTimer);
+          closeOverlay('countdown-overlay');
+          openTVBroadcast();
+        }
+      }, 1000);
+    }
+
+    function updateCountdownRing() {
+      document.getElementById('cd-seconds-num').textContent = cdSeconds;
+      const offset = 326.7 * (1 - cdSeconds / 40);
+      document.getElementById('cd-ring-progress').style.strokeDashoffset = offset.toFixed(1);
+    }
+
+    function fastForwardCountdown() {
+      AudioEngine.playClick();
+      clearInterval(cdTimer);
+      closeOverlay('countdown-overlay');
+      openTVBroadcast();
+    }
+
+    function openTVBroadcast() {
+      if (!pendingBroadcast) return;
+      const b = pendingBroadcast;
+      AudioEngine.playNewsChime();
+      document.getElementById('tv-target-portrait').innerHTML = getPortraitSVG(b.target.portrait || 'criminal');
+      document.getElementById('tv-target-title').textContent = `${b.target.name} — ${b.target.title}`;
+      document.getElementById('tv-headline').textContent = b.target.news;
+      document.getElementById('tv-cause').textContent = b.methodLabel;
+      document.getElementById('tv-condition').textContent = b.condLabel;
+
+      // Restart ECG animation cleanly
+      const ecg = document.getElementById('tv-ecg-path');
+      ecg.classList.remove('ecg-path');
+      void ecg.offsetWidth;
+      ecg.classList.add('ecg-path');
+
+      document.getElementById('tv-stat-deltas').innerHTML = `
+        <div class="bg-red-950/45 border border-red-800/50 rounded-xl p-2 text-center"><div class="text-[10px] text-slate-400">الشك</div><div class="font-black text-red-400">+${b.suspDelta}%</div></div>
+        <div class="bg-sky-950/45 border border-sky-800/50 rounded-xl p-2 text-center"><div class="text-[10px] text-slate-400">الإنسانية</div><div class="font-black text-sky-400">${b.humDelta}%</div></div>
+        <div class="bg-amber-950/45 border border-amber-800/50 rounded-xl p-2 text-center"><div class="text-[10px] text-slate-400">النقاط</div><div class="font-black text-amber-300">+${b.ptsDelta}</div></div>
+        <div class="bg-purple-950/45 border border-purple-800/50 rounded-xl p-2 text-center"><div class="text-[10px] text-slate-400">رأي الشارع</div><div class="font-black ${b.pubDelta >= 0 ? 'text-emerald-400' : 'text-red-400'}">${b.pubDelta >= 0 ? '+' : ''}${b.pubDelta}</div></div>
+      `;
+
+      const mood = state.humanity >= 65 ? 'normal' : (state.humanity >= 35 ? 'sarcastic' : 'cold');
+      document.getElementById('tv-conscience-portrait').innerHTML = getPortraitSVG('conscience', mood);
+      document.getElementById('tv-conscience-comment').textContent = `"${state.conscienceMsg}"`;
+      openOverlay('tv-broadcast-overlay');
+    }
+
+    function closeTVBroadcast() {
+      AudioEngine.playClick();
+      closeOverlay('tv-broadcast-overlay');
+      const lastTarget = pendingBroadcast ? pendingBroadcast.target : null;
+      pendingBroadcast = null;
+
+      if (state.suspicion >= 100) {
+        setTimeout(() => startInterrogation(), 350);
+      } else if (!state.rulerMode && lastTarget && lastTarget.id === 'force') {
+        setTimeout(() => triggerEnding('shadow_ruler'), 400);
+      }
+    }
+
+    function generateGlobalTarget(silent = false) {
+      if (!silent) AudioEngine.playClick();
+      const ranks = ['البارون', 'الجنرال', 'اللورد', 'الأميرال', 'الدكتور', 'الكونت', 'الشبح'];
+      const names = ['فولكوف', 'كاستيلو', 'رايفن', 'ماركوف', 'سيلفر', 'دراكو', 'توريس', 'كرومويل', 'بلاكوود'];
+      const crimes = ['زعيم شبكة تهريب السلاح العابرة للقارات', 'عراب غسيل الأموال الدولي', 'مؤسس سوق الجرائم المظلم', 'قائد مرتزقة المحيط'];
+      const r = ranks[Math.floor(Math.random() * ranks.length)];
+      const n = names[Math.floor(Math.random() * names.length)];
+      const c = crimes[Math.floor(Math.random() * crimes.length)];
+      const id = 'proc_' + (state.procCounter++);
+      const obj = {
+        id, name: `${r} ${n}`, title: `${c} (ملف #${state.procCounter - 1})`, district: 'port',
+        desc: 'هدف عالمي خطير رصدته شبكتك الاستخباراتية في عصر حاكم العالم الجديد.',
+        baseSusp: 22 + Math.floor(Math.random() * 7), humCost: 5, pts: 95 + Math.floor(Math.random() * 40),
+        intGain: 12, pubGain: 8, isGlobal: true, portrait: 'criminal',
+        news: `عاجل عالمياً: سقوط «${r} ${n}» (${c}) بسكتة قلبية غامضة... العالم يخضع لحاكم زالفورا!`
+      };
+      state.proceduralTargets.push(obj);
+      unlockTarget(id);
+      saveAuto();
+      if (!silent) { updateAllUI(); showToast(`🌍 تم فتح ملف عالمي جديد: ${obj.name}`, 'success'); }
+    }
+
+    /* ==========================================================
+       11. ARCHIVE & SKINS SUB-VIEWS
+       ========================================================== */
+    function toggleArchiveUV() {
+      AudioEngine.playClick();
+      if (state.roomLevel < 1) {
+        showToast('طوّر الغرفة للمستوى 1 أولاً لامتلاك مصباح UV!', 'warning');
+        return;
+      }
+      state.archiveUVOn = !state.archiveUVOn;
+      saveAuto();
+      renderArchive();
+    }
+
+    function renderArchive() {
+      const wrap = document.getElementById('archive-paper-wrap');
+      const list = document.getElementById('archive-entries-list');
+      wrap.classList.toggle('uv-mode', state.archiveUVOn);
+      document.getElementById('btn-uv-toggle').textContent = state.archiveUVOn ? '🔦 إطفاء مصباح UV' : '🔦 تشغيل مصباح UV';
+
+      if (state.archive.length === 0) {
+        list.innerHTML = `<div class="text-center py-12 font-bold opacity-60">لم يُكتب أي اسم في المفكرة بعد...</div>`;
+        return;
+      }
+      list.innerHTML = state.archive.map((e, i) => {
+        const isUV = e.penId === 'uv';
+        const hidden = isUV && !state.archiveUVOn;
+        return `<div class="p-3.5 rounded-xl border ${state.archiveUVOn ? 'border-violet-500/45 bg-violet-950/35' : 'border-stone-500/30 bg-stone-900/5'}">
+          <div class="flex flex-wrap justify-between gap-2">
+            <div>
+              <span class="text-[11px] opacity-60 font-bold">#${state.archive.length - i} • ${e.timeStr}</span>
+              <div class="font-ink text-2xl sm:text-3xl font-bold" style="color:${hidden ? 'transparent' : (isUV ? '#38bdf8' : (state.archiveUVOn ? '#e9d5ff' : e.penColor))}; text-shadow:${isUV && state.archiveUVOn ? '0 0 12px #38bdf8' : 'none'}">
+                ${hidden ? 'ـــــــــــــــ' : e.name}
+              </div>
+              ${hidden ? '<div class="text-xs font-bold text-stone-600 italic">🔒 حبر سري — شغّل مصباح UV للقراءة</div>' : `<div class="text-xs font-bold opacity-80">${e.title}</div>`}
+            </div>
+            <div class="text-xs font-bold opacity-80 text-left space-y-0.5">
+              <div>✒️ ${e.penName}</div>
+              <div>⏳ ${e.methodLabel}</div>
+              <div>🛡️ ${e.alibiLabel}</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderSkins() {
+      const grid = document.getElementById('skins-grid');
+      grid.innerHTML = NOTEBOOK_SKINS.map(s => {
+        const owned = state.ownedSkins.includes(s.id);
+        const active = state.activeSkin === s.id;
+        return `<div class="p-4 rounded-2xl border ${active ? 'border-amber-400 bg-amber-950/20' : 'border-slate-800 bg-[#0e1320]'} flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <strong class="text-sm text-white">${s.name}</strong>
+              <span class="text-xs font-extrabold ${owned ? 'text-emerald-400' : 'text-amber-300'}">${owned ? (active ? '✓ مُفعّل' : 'مملوك') : s.cost + ' نقاط'}</span>
+            </div>
+            <p class="text-xs text-slate-400">${s.desc}</p>
+          </div>
+          <button onclick="selectOrBuySkin('${s.id}')" ${active ? 'disabled' : ''} class="${active ? 'btn-dark text-slate-500' : 'btn-crimson text-white'} w-full py-2 rounded-xl text-xs font-extrabold">
+            ${active ? 'المظهر النشط حالياً' : (owned ? 'تفعيل المظهر' : `شراء وتفعيل (${s.cost} نقاط)`)}
+          </button>
+        </div>`;
+      }).join('');
+    }
+
+    function selectOrBuySkin(id) {
+      AudioEngine.playClick();
+      const s = NOTEBOOK_SKINS.find(x => x.id === id);
+      if (!s) return;
+      if (!state.ownedSkins.includes(id)) {
+        if (state.points < s.cost) { showToast('نقاط النفوذ غير كافية لشراء هذا المظهر!', 'warning'); return; }
+        state.points -= s.cost;
+        state.ownedSkins.push(id);
+      }
+      state.activeSkin = id;
+      saveAuto();
+      updateAllUI();
+      renderSkins();
+      showToast(`🎨 تم تفعيل مظهر «${s.name}»!`, 'success');
+    }
+
+    /* ==========================================================
+       12. CHARACTERS & FAMILY TAB
+       ========================================================== */
+    function renderCharacters() {
+      const alliesBox = document.getElementById('allies-grid');
+      const invBox = document.getElementById('investigators-grid');
+      const brotherDead = state.writtenTargets.includes('damian');
+      const cainDead = state.writtenTargets.includes('cain');
+
+      const scorpionNeed = state.unlockedTargets.includes('scorpion') && !state.unmaskedIds.includes('scorpion');
+      const profNeed = state.unlockedTargets.includes('professor') && !state.unmaskedIds.includes('professor');
+      const cainNeed = state.unlockedTargets.includes('cain') && !state.unmaskedIds.includes('cain');
+
+      const allies = [
+        { id: 'marcus', name: 'مَارْكُوس كَالِيد (الأب القاضي)', role: 'يثق فيك تماماً ولا يشك بك أبداً', desc: 'قاضي متقاعد يدعمك بخبرته القانونية لترد بقوة في الاستجوابات.', btn: '💬 استشارة قانونية (+6 ذكاء)', act: () => interactChar('marcus') },
+        { id: 'elena', name: 'إيلينَا كَالِيد (الأم الطبيبة النفسية)', role: 'دعم وحنان بلا أي شك', desc: 'تهدئ توترك بحب وتمنحك شهادة العيلة القاطعة كحجة غياب.', btn: '🏠 عشاء العيلة (+كارت عيلة، -5% شك)', act: () => interactChar('elena') },
+        { id: 'damian', name: 'دَامِيَان كَالِيد (الأخ الأكبر)', role: brotherDead ? 'متوفى بسكتة طبيعية' : 'محامي شركات فاسد', desc: brotherDead ? 'رحل دون أي شبهة وبقي دعم العيلة سليماً، لكن ضميرك يطاردك.' : 'تورطه في غسيل الأموال سيكشفه لاحقاً كمعضلة في المفكرة.', btn: brotherDead ? 'ملف مغلق' : '🔍 متابعة أخباره', dis: brotherDead, act: () => showToast(state.unlockedTargets.includes('damian') ? 'ملفه مفتوح في المفكرة إن قررت كتابة اسمه.' : 'لم تتجمع أدلة كافية ضده بعد.', 'info') },
+        { id: 'lucas', name: 'لُوكَاس (المبرمج العبقري)', role: 'اختراق وكشف أسماء وحجج رقمية', desc: scorpionNeed ? '🔥 جاهز لاختراق شبكة الميناء وكشف الاسم الحقيقي لـ «العقرب»!' : 'يؤمّن هاتفك ويمنحك كارت بث مباشر كحجة غياب رقمية.', btn: scorpionNeed ? '🔓 كشف الاسم الحقيقي لـ «العقرب»!' : '📡 تأمين سجل رقمي (+كارت، +4 ذكاء)', hi: scorpionNeed, act: () => interactChar('lucas') },
+        { id: 'maya', name: 'مَايَا (الصحفية الاستقصائية)', role: 'تحقيق صحفي وكشف الهويات', desc: cainNeed ? '🚨 عرفت الاسم الحقيقي للمقلّد المجنون! كلمها فوراً!' : (profNeed ? '🔍 وصلت للاسم الحقيقي لـ «الأستاذ»!' : 'تجلب لك معلومات سرية ونقاط نفوذ من أرشيف الصحافة.'), btn: cainNeed ? '🔥 كشف اسم المقلّد المجنون!' : (profNeed ? '🔓 كشف الاسم الحقيقي لـ «الأستاذ»!' : '🗞️ تبادل معلومات (+12 نقاط)'), hi: cainNeed || profNeed, act: () => interactChar('maya') },
+        { id: 'arthur', name: 'آرْثَر (صاحب الكافيه الليلي)', role: 'كاميرات مراقبة وأسرار المدينة', desc: 'كافيه آرثر مغطى بكاميرات عالية الدقة، أفضل دليل فيديو لبراءتك.', btn: '🎥 الجلوس تحت الكاميرات (+كارت آرثر)', act: () => interactChar('arthur') }
+      ];
+
+      alliesBox.innerHTML = '';
+      allies.forEach(c => {
+        const div = document.createElement('div');
+        div.className = `p-3.5 rounded-2xl border flex flex-col justify-between gap-2.5 ${c.hi ? 'bg-red-950/35 border-red-500 animate-pulse' : 'bg-[#141b2b] border-slate-800'}`;
+        div.innerHTML = `<div class="flex items-start gap-3"><div class="w-14 h-14 rounded-2xl overflow-hidden border border-slate-700 shrink-0">${getPortraitSVG(c.id)}</div><div><div class="font-extrabold text-sm text-white">${c.name}</div><div class="text-[11px] text-sky-400 font-bold mb-1">${c.role}</div><p class="text-xs text-slate-300 leading-relaxed">${c.desc}</p></div></div>`;
+        const b = document.createElement('button');
+        b.disabled = !!c.dis;
+        b.className = `w-full py-2 rounded-xl text-xs font-extrabold ${c.hi ? 'btn-crimson text-white' : 'btn-dark text-slate-200'}`;
+        b.textContent = c.btn;
+        b.onclick = c.act;
+        div.appendChild(b);
+        alliesBox.appendChild(div);
+      });
+
+      const invs = [
+        { id: 'siro', name: 'سِيرُو فَان', role: 'المحقق العبقري والمحلل السلوكي', desc: 'خصمك الأساسي. يحلل التوقيتات ويستدعيك للاستجواب عند 100% شك.', btn: '⚡ دخول استجواب تجريبي الآن', act: () => startInterrogation() },
+        { id: 'clara', name: 'كْلَارَا نُور', role: 'خبيرة الأمن السيبراني', desc: 'تتبع الكاميرات والإنترنت. غرفة المستوى 3 وميني جيم الموبايل يحبطانها.', status: state.roomLevel >= 3 ? '✅ تم إحباط تتبعها' : '⚠️ تراقب الشبكة' },
+        { id: 'rex', name: 'رِيكْس هَارُون', role: 'قائد فرقة المداهمات', desc: 'ضابط مندفع ينتظر إذن تفتيش منزلك. غرفة المستوى 4 تحميك بالكامل.', status: state.roomLevel >= 4 ? '✅ غرفتك محصنة كالشبح' : '⚠️ مستعد للمداهمة' },
+        { id: 'cain', name: 'كَايْن فَالِيرِي (المقلّد)', role: cainDead ? 'تم القضاء عليه' : 'مضطرب ينسب جرائمك لنفسه', desc: 'اكشف اسمه عبر مَايَا واكتبه في المفكرة لإنهاء فوضاه.', status: cainDead ? '☠️ تمت تصفيته' : (state.unmaskedIds.includes('cain') ? '🎯 متاح في المفكرة' : '❓ اسمه مجهول') },
+        { id: 'vex', name: 'فِيكْس (المطارد الدولي)', role: 'رئيس التحالف الدولي للمحققين', desc: 'أخطر محقق في العالم؛ يطاردك في «عصر حاكم العالم الجديد».', status: state.writtenTargets.includes('g_vex') ? '☠️ تمت تصفيته' : (state.rulerMode ? '🔴 يطاردك عالمياً!' : '⏳ يراقب من بعيد') }
+      ];
+
+      invBox.innerHTML = '';
+      invs.forEach(inv => {
+        const div = document.createElement('div');
+        div.className = 'p-3.5 rounded-2xl border border-red-900/40 bg-[#15101a] flex flex-col justify-between gap-2.5';
+        div.innerHTML = `<div class="flex items-start gap-3"><div class="w-14 h-14 rounded-2xl overflow-hidden border border-red-800/60 shrink-0">${getPortraitSVG(inv.id)}</div><div><div class="font-extrabold text-sm text-white">${inv.name}</div><div class="text-[11px] text-red-400 font-bold mb-1">${inv.role}</div><p class="text-xs text-slate-300 leading-relaxed">${inv.desc}</p></div></div>`;
+        if (inv.act) {
+          const b = document.createElement('button'); b.className = 'btn-crimson w-full py-2 rounded-xl text-xs font-extrabold text-white'; b.textContent = inv.btn; b.onclick = inv.act; div.appendChild(b);
+        } else {
+          div.innerHTML += `<div class="text-xs font-bold text-slate-300 bg-black/40 px-3 py-2 rounded-xl border border-slate-800">${inv.status}</div>`;
+        }
+        invBox.appendChild(div);
+      });
+    }
+
+    function interactChar(id) {
+      AudioEngine.playClick();
+      // Special unmasking actions don't require turn cooldown
+      if (id === 'lucas' && state.unlockedTargets.includes('scorpion') && !state.unmaskedIds.includes('scorpion')) {
+        state.unmaskedIds.push('scorpion'); state.intellect += 6;
+        unlockAchievement('unmasker');
+        state.conscienceMsg = 'أحسنت! كشف لوكاس الاسم الحقيقي لـ «العقرب»: ريكاردو سالفا. اذهب للمفكرة الآن!';
+        showToast('🔓 تم كشف اسم «العقرب»: رِيكَارْدُو سَالْفَا — متاح الآن في المفكرة!', 'success');
+        saveAuto(); updateAllUI(); renderCharacters(); return;
+      }
+      if (id === 'maya' && state.unlockedTargets.includes('cain') && !state.unmaskedIds.includes('cain')) {
+        state.unmaskedIds.push('cain'); state.intellect += 10;
+        unlockAchievement('unmasker');
+        state.conscienceMsg = 'مَايَا كشفت الاسم الحقيقي للمقلّد المجنون: كَايْن فَالِيرِي! أنهِ فوضاه بالمفكرة.';
+        showToast('🔥 تم كشف اسم المقلّد: كَايْن فَالِيرِي — متاح في المفكرة!', 'success');
+        saveAuto(); updateAllUI(); renderCharacters(); return;
+      }
+      if (id === 'maya' && state.unlockedTargets.includes('professor') && !state.unmaskedIds.includes('professor')) {
+        state.unmaskedIds.push('professor'); state.intellect += 8;
+        unlockAchievement('unmasker');
+        showToast('🔓 تم كشف اسم «الأستاذ»: أَلِيكْسَنْدَر فُون — متاح في المفكرة!', 'success');
+        saveAuto(); updateAllUI(); renderCharacters(); return;
+      }
+
+      if (state.lastTalkTurn[id] === state.actionTurn) {
+        showToast('تفاعلت معه في هذا اليوم بالفعل. اكتب اسماً جديداً ثم عد إليه.', 'warning');
+        return;
+      }
+      state.lastTalkTurn[id] = state.actionTurn;
+
+      if (id === 'marcus') { state.intellect += 6; showToast('استشارة والدك القاضي (+6 ذكاء وتمويه)', 'success'); }
+      else if (id === 'elena') { state.alibis.family++; state.suspicion = Math.max(0, state.suspicion - 5); showToast('عشاء مع العيلة (+1 كارت عيلة، -5% شك)', 'success'); }
+      else if (id === 'lucas') { state.alibis.lucas++; state.intellect += 4; showToast('تأمين رقمي مع لوكاس (+1 كارت لوكاس، +4 ذكاء)', 'success'); }
+      else if (id === 'maya') { state.points += 12; showToast('معلومات صحفية من مايا (+12 نقاط)', 'success'); }
+      else if (id === 'arthur') { state.alibis.arthur++; showToast('جلست تحت كاميرات كافيه آرثر (+1 كارت آرثر)', 'success'); }
+
+      saveAuto(); updateAllUI();
+    }
+
+    /* ==========================================================
+       13. SECRET ROOM UPGRADES TAB
+       ========================================================== */
+    function renderRoomUpgrades() {
+      const box = document.getElementById('room-upgrades-list');
+      box.innerHTML = ROOM_UPGRADES.map(u => {
+        const owned = state.roomLevel >= u.level;
+        const next = state.roomLevel === u.level - 1;
+        const afford = state.points >= u.cost;
+        return `<div class="p-4 rounded-2xl border flex flex-col justify-between gap-3 ${owned ? 'bg-emerald-950/25 border-emerald-600/50' : (next ? 'bg-[#151c2e] border-amber-500/45' : 'bg-[#0b0f19] border-slate-800 opacity-60')}">
+          <div>
+            <div class="flex justify-between items-center gap-2 mb-1.5">
+              <strong class="text-sm text-white">${u.title}</strong>
+              <span class="text-xs font-black px-2 py-0.5 rounded-full ${owned ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">${owned ? '✓ مُثبّت' : u.cost + ' نقاط'}</span>
+            </div>
+            <p class="text-xs text-slate-300 mb-1.5"><strong>التجهيزات:</strong> ${u.items}</p>
+            <p class="text-xs text-sky-300"><strong>الفائدة:</strong> ${u.benefit}</p>
+          </div>
+          ${owned
+            ? '<div class="text-xs font-extrabold text-emerald-400 text-center py-2 bg-emerald-950/40 rounded-xl">تم تأمين هذا المستوى</div>'
+            : `<button onclick="buyRoomUpgrade(${u.level})" ${(!next || !afford) ? 'disabled' : ''} class="${next && afford ? 'btn-crimson text-white' : 'btn-dark text-slate-500'} w-full py-2.5 rounded-xl text-xs font-extrabold">${!next ? 'افتح المستوى السابق أولاً' : (!afford ? 'النقاط غير كافية' : 'ترقية الغرفة الآن')}</button>`
+          }
+        </div>`;
+      }).join('');
+    }
+
+    function buyRoomUpgrade(lvl) {
+      const u = ROOM_UPGRADES.find(x => x.level === lvl);
+      if (!u || state.roomLevel !== lvl - 1 || state.points < u.cost) return;
+      AudioEngine.playClick();
+      state.points -= u.cost;
+      state.roomLevel = lvl;
+      if (lvl === 2) state.intellect += 15;
+      if (lvl === 3) { state.suspicion = Math.max(0, state.suspicion - 20); state.intellect += 15; }
+      if (lvl === 4) { state.suspicion = Math.max(0, state.suspicion - 25); state.intellect += 25; unlockAchievement('fortress'); }
+      saveAuto(); updateAllUI(); renderRoomUpgrades();
+      showToast(`🔐 تمت ترقية غرفتك السرية إلى المستوى ${lvl}!`, 'success');
+    }
+
+    /* ==========================================================
+       14. CITY MAP & DETECTIVE INVESTIGATION BOARD
+       ========================================================== */
+    function selectMapDistrict(dist) {
+      AudioEngine.playClick();
+      const names = { port: '⚓ الميناء القديم', court: '⚖️ قصر العدالة', university: '🎓 جامعة زالفورا', home: '🏠 بيت عائلة كاليد', cafe: '☕ كافيه آرثر الليلي', police: '🚨 مقر شرطة زالفورا' };
+      const activeHere = getAllTargets().filter(t => t.district === dist && state.unlockedTargets.includes(t.id) && !state.writtenTargets.includes(t.id));
+      const box = document.getElementById('map-district-info');
+      let html = `<div class="font-black text-white text-sm mb-1">${names[dist]}</div>`;
+      if (activeHere.length > 0) {
+        html += `<div class="text-red-300 text-xs mb-1">🎯 أهداف نشطة في هذا الحي:</div><ul class="list-disc pr-5 text-xs space-y-1 text-slate-200">`;
+        activeHere.forEach(t => { html += `<li><strong>${isTargetMasked(t) ? t.alias : t.name}</strong> — ${t.title}</li>`; });
+        html += `</ul>`;
+      } else {
+        const extra = dist === 'home' ? 'ملاذك الآمن مع والدك القاضي ووالدتك إيلينا.' : dist === 'cafe' ? 'مكان مثالي للحصول على حجة غياب بالكاميرات من آرثر.' : dist === 'police' ? `سيرو فان وكلارا نور يتابعان قضيتك هنا (نسبة الشك الحالية: ${state.suspicion}%).` : 'الحي هادئ حالياً تحت المطر... لا توجد أهداف مفتوحة هنا.';
+        html += `<div class="text-xs text-slate-300">${extra}</div>`;
+      }
+      box.innerHTML = html;
+    }
+
+    function renderMapAndBoard() {
+      document.getElementById('board-proximity').textContent = state.suspicion + '%';
+      const unlocked = state.roomLevel >= 3 || state.intellect >= 40;
+      const theory = unlocked
+        ? (state.suspicion >= 70 ? '⚠️ نظرية سيرو الحالية: «المشتبه به خريج قانون من زالفورا — أمر الاستجواب جاهز عند 100%!»' : '🔍 نظرية سيرو الحالية: «الفاعل ذكي ويستخدم حجج غياب متقنة، ما زلت أبحث عن ثغرة.»')
+        : '🔒 طوّر غرفتك للمستوى 3 (أو ارفع الذكاء لـ 40) لاختراق نظرية سيرو السرية.';
+
+      const clues = [
+        { t: 'نقطة البداية: جامعة زالفورا', s: state.writtenTargets.length >= 1 ? 'مؤكد' : 'قيد الفحص' },
+        { t: 'قاعدة الـ 40 ثانية والسكتات القلبية', s: state.writtenTargets.length >= 2 ? 'مؤكد' : 'فرضية' },
+        { t: 'تتبع كلارا نور الرقمي', s: state.roomLevel >= 3 ? 'مُحبط بالكامل ✓' : 'نشط ⚠️' },
+        { t: 'خيوط التضليل الميدانية', s: `${state.disinfoCount} تضليل ناجح` }
+      ];
+
+      document.getElementById('investigation-board-box').innerHTML = `
+        <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-45" viewBox="0 0 600 180">
+          <line x1="110" y1="45" x2="300" y2="120" stroke="#dc2626" stroke-width="2" stroke-dasharray="5 3"/>
+          <line x1="490" y1="45" x2="300" y2="120" stroke="#dc2626" stroke-width="2"/>
+          <line x1="110" y1="145" x2="490" y2="145" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 4"/>
+        </svg>
+        <div class="relative z-10 space-y-3">
+          <div class="bg-red-950/60 border border-red-700/60 rounded-xl px-3.5 py-2.5 text-xs font-bold text-red-100">${theory}</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            ${clues.map(c => `<div class="bg-[#0c0e15]/95 border border-red-900/50 rounded-xl p-3 flex justify-between items-center text-xs"><span class="font-bold text-white">📌 ${c.t}</span><span class="text-[11px] px-2 py-0.5 rounded bg-black/50 text-amber-300 font-bold">${c.s}</span></div>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==========================================================
+       15. ENCRYPTED PHONE & MINI-GAME 1 (CAMERA WIPE)
+       ========================================================== */
+    const PHONE_EVENTS = [
+      { from: 'لُوكَاس', text: 'راين! رصدت سيارة شرطة قرب شارعك، هل أفعّل تمويه الـ GPS الآن؟', yes: 'فعّل التمويه (-10% شك، -10 نقاط)', no: 'اتركه عادياً (+5 ذكاء)', onYes: () => { state.suspicion = Math.max(0, state.suspicion - 10); state.points = Math.max(0, state.points - 10); }, onNo: () => { state.intellect += 5; } },
+      { from: 'مَايَا', text: 'عندي سبق صحفي عن فساد في المحكمة، هل أكتب أن «حاكم الظل» منقذ للمدينة؟', yes: 'نعم! ادعمي صورتي (+10 رأي الشارع، +4% شك)', no: 'لا، ابقي محايدة (-4% شك)', onYes: () => { state.publicOpinion = Math.min(100, state.publicOpinion + 10); state.suspicion = Math.min(99, state.suspicion + 4); }, onNo: () => { state.suspicion = Math.max(0, state.suspicion - 4); } },
+      { from: 'إيلينَا (أمي)', text: 'حبيبي راين، والدك يسأل هل ستحضر العشاء العائلي الليلة؟', yes: 'بالطبع سأحضر (+1 كارت عيلة، +5% إنسانية)', no: 'مشغول بالدراسة (+5 ذكاء)', onYes: () => { state.alibis.family++; state.humanity = Math.min(100, state.humanity + 5); }, onNo: () => { state.intellect += 5; } },
+      { from: 'رقم مجهول (سِيرُو فَان)', text: 'رسالة قصيرة: «العدالة لا تُكتب في الظلام يا راين... نلتقي قريباً.»', yes: 'تجاهل ببرود (+6 ذكاء، -4% شك)', no: 'رد ساخر (+15 نقاط، +6% شك)', onYes: () => { state.intellect += 6; state.suspicion = Math.max(0, state.suspicion - 4); }, onNo: () => { state.points += 15; state.suspicion = Math.min(99, state.suspicion + 6); } }
+    ];
+
+    function pushRandomPhoneMessage(silent = false) {
+      const ev = PHONE_EVENTS[Math.floor(Math.random() * PHONE_EVENTS.length)];
+      state.phoneMessages.unshift({ id: 'pm_' + Date.now() + Math.random(), from: ev.from, text: ev.text, yes: ev.yes, no: ev.no, evIdx: PHONE_EVENTS.indexOf(ev), handled: false });
+      if (state.phoneMessages.length > 8) state.phoneMessages.pop();
+      state.unreadPhone++;
+      updatePhoneBadge();
+      if (!silent) showToast(`📱 رسالة مشفرة جديدة من: ${ev.from}`, 'info');
+    }
+
+    function triggerRandomPhoneEvent() {
+      AudioEngine.playClick();
+      pushRandomPhoneMessage(false);
+      saveAuto();
+      renderPhone();
+    }
+
+    function renderPhone() {
+      const box = document.getElementById('phone-messages-list');
+      box.innerHTML = state.phoneMessages.map(m => `
+        <div class="bg-[#131a2a] border ${m.handled ? 'border-slate-800 opacity-75' : 'border-sky-600/60'} rounded-2xl p-3.5">
+          <div class="flex justify-between items-center mb-1">
+            <strong class="text-xs text-sky-400">📩 ${m.from}</strong>
+            <span class="text-[10px] text-slate-500">${m.handled ? 'تم الرد ✓' : 'رسالة جديدة'}</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-200 mb-2.5">${m.text}</p>
+          ${!m.handled && m.yes ? `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="handlePhoneChoice('${m.id}', true)" class="btn-crimson py-2 px-3 rounded-xl text-xs font-extrabold text-white">${m.yes}</button>
+              <button onclick="handlePhoneChoice('${m.id}', false)" class="btn-dark py-2 px-3 rounded-xl text-xs font-bold text-slate-200">${m.no}</button>
+            </div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function handlePhoneChoice(msgId, isYes) {
+      AudioEngine.playClick();
+      const m = state.phoneMessages.find(x => x.id === msgId);
+      if (!m || m.handled) return;
+      m.handled = true;
+      const ev = PHONE_EVENTS[m.evIdx];
+      if (ev) { if (isYes) ev.onYes(); else ev.onNo(); }
+      saveAuto(); updateAllUI(); renderPhone();
+      showToast('تم تنفيذ ردك على الرسالة المشفرة!', 'success');
+    }
+
+    // Mini-Game 1: Camera Wipe
+    let cctv = { active: false, pos: 0, dir: 1, hits: 0, time: 12, loop: null, timer: null };
+
+    function startCCTVMiniGame() {
+      if (cctv.active) return;
+      AudioEngine.playClick();
+      cctv = { active: true, pos: 5, dir: 1, hits: 0, time: 12, loop: null, timer: null };
+      document.getElementById('cctv-game-area').classList.remove('hidden');
+      document.getElementById('btn-start-cctv').disabled = true;
+      document.getElementById('cctv-hits').textContent = '0';
+      document.getElementById('cctv-time').textContent = '12';
+
+      cctv.loop = setInterval(() => {
+        cctv.pos += cctv.dir * 2.8;
+        if (cctv.pos >= 96) { cctv.pos = 96; cctv.dir = -1; }
+        if (cctv.pos <= 0) { cctv.pos = 0; cctv.dir = 1; }
+        document.getElementById('cctv-cursor').style.left = cctv.pos + '%';
+      }, 28);
+
+      cctv.timer = setInterval(() => {
+        cctv.time--;
+        document.getElementById('cctv-time').textContent = cctv.time;
+        if (cctv.time <= 0) endCCTVMiniGame(false);
+      }, 1000);
+    }
+
+    function attemptCCTVHit() {
+      if (!cctv.active) return;
+      AudioEngine.playClick();
+      if (cctv.pos >= 36 && cctv.pos <= 62) {
+        cctv.hits++;
+        document.getElementById('cctv-hits').textContent = cctv.hits;
+        showToast(`✓ اختراق ناجح (${cctv.hits}/3)!`, 'success');
+        if (cctv.hits >= 3) endCCTVMiniGame(true);
+      } else {
+        cctv.time = Math.max(1, cctv.time - 2);
+        showToast('✗ خطأ في التوقيت (-2 ثانية)!', 'danger');
+      }
+    }
+
+    function endCCTVMiniGame(won) {
+      cctv.active = false;
+      clearInterval(cctv.loop); clearInterval(cctv.timer);
+      document.getElementById('cctv-game-area').classList.add('hidden');
+      document.getElementById('btn-start-cctv').disabled = false;
+      if (won) {
+        state.suspicion = Math.max(0, state.suspicion - 12);
+        state.intellect += 6;
+        unlockAchievement('cctv_hacker');
+        showToast('💻 تم مسح تسجيلات الكاميرا قبل كلارا نور! (-12% شك، +6 ذكاء)', 'success');
+      } else {
+        state.suspicion = Math.min(98, state.suspicion + 6);
+        showToast('⚠️ انتهى الوقت! سحبت كلارا جزءاً من التسجيل (+6% شك).', 'danger');
+      }
+      saveAuto(); updateAllUI();
+    }
+
+    /* ==========================================================
+       16. SECRET FOLLOWERS (NEW WORLD RULER MODE)
+       ========================================================== */
+    function renderFollowers() {
+      const box = document.getElementById('followers-content');
+      if (!state.rulerMode) {
+        box.innerHTML = `<div class="bg-[#0a0e18] border border-amber-700/40 rounded-2xl p-6 text-center space-y-2">
+          <div class="text-4xl">🔒</div>
+          <div class="font-black text-amber-300 text-base">شبكة الأتباع السريين مغلقة حالياً</div>
+          <p class="text-xs text-slate-400 max-w-md mx-auto">تُفتح هذه الشبكة فور وصولك إلى أي نهاية واختيار «العودة للكتابة — عصر حاكم العالم الجديد» للسيطرة على العالم!</p>
+        </div>`;
+        return;
+      }
+      box.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">${FOLLOWERS_DEF.map(f => {
+        const owned = state.followersOwned.includes(f.id);
+        return `<div class="p-4 rounded-2xl border ${owned ? 'bg-amber-950/20 border-amber-500/60' : 'bg-[#141b2c] border-slate-800'} flex flex-col justify-between gap-3">
+          <div>
+            <div class="text-3xl mb-1">${f.icon}</div>
+            <div class="font-extrabold text-sm text-white">${f.name}</div>
+            <p class="text-xs text-slate-300 mt-1">${f.role}</p>
+          </div>
+          ${owned
+            ? `<button onclick="dispatchFollower('${f.id}')" class="btn-crimson w-full py-2.5 rounded-xl text-xs font-extrabold text-white">${f.actionLabel}</button>`
+            : `<button onclick="recruitFollower('${f.id}')" class="btn-dark w-full py-2.5 rounded-xl text-xs font-extrabold text-amber-300 border-amber-600/50">تجنيد (${f.cost} نقاط)</button>`
+          }
+        </div>`;
+      }).join('')}</div>`;
+    }
+
+    function recruitFollower(id) {
+      AudioEngine.playClick();
+      const f = FOLLOWERS_DEF.find(x => x.id === id);
+      if (!f || state.points < f.cost) { showToast('نقاط النفوذ غير كافية للتجنيد!', 'warning'); return; }
+      state.points -= f.cost;
+      state.followersOwned.push(id);
+      saveAuto(); updateAllUI(); renderFollowers();
+      showToast(`👑 تم تجنيد ${f.name} في شبكتك السرية!`, 'success');
+    }
+
+    function dispatchFollower(id) {
+      AudioEngine.playClick();
+      if (state.followerLastUsed[id] === state.actionTurn) {
+        showToast('نفّذ مهمته في هذا اليوم. اكتب اسماً جديداً لإرساله مجدداً.', 'warning');
+        return;
+      }
+      state.followerLastUsed[id] = state.actionTurn;
+      if (id === 'hacker') { state.suspicion = Math.max(0, state.suspicion - 18); showToast('💻 الهاكر «زِد» مسح آثارك (-18% شك)!', 'success'); }
+      else if (id === 'lawyer') { state.points += 45; state.alibis.arthur++; showToast('⚖️ المحامي «كُول» جلب +45 نقاط وكارت حجة غياب!', 'success'); }
+      else if (id === 'officer') { state.suspicion = Math.max(0, state.suspicion - 10); generateGlobalTarget(true); showToast('🚔 الضابط «فَانْس» سرّب ملفاً عالمياً جديداً وخفض الشك -10%!', 'success'); }
+      saveAuto(); updateAllUI();
+    }
+
+    /* ==========================================================
+       17. INTERROGATION ROOM + HEARTBEAT POLYGRAPH MINI-GAME
+       ========================================================== */
+    let interr = { active: false, qIdx: 0, score: 0, time: 15, timer: null, qs: [] };
+    let hb = { active: false, pos: 42, calmTicks: 0, totalTicks: 0, time: 7.0, loop: null };
+
+    function getInterrogationQuestions(round) {
+      if (round === 1) {
+        return [
+          { q: 'بدأت الوفيات ليلة تخرجك من كلية القانون يا راين... هل هذه مجرد صدفة؟', opts: [{ t: '«آلاف الطلاب تخرجوا في تلك الليلة، ربط التوقيت بي تخمين بلا دليل.»', ok: true }, { t: '«أنا لم أفعل شيئاً! لماذا تلاحقني وحدي؟»', ok: false }] },
+          { q: 'أين كنت بالضبط وقت سقوط الضحية الأخيرة؟ أريد دليلاً قاطعاً.', opts: [{ t: '«كنت نائماً في غرفتي ولا أذكر الساعة.»', ok: false }, { t: '«كنت أراجع ملفات تخرجي قبل إعلان الخبر بساعتين.»', ok: true }] },
+          { q: 'لماذا تبدو هادئاً بشكل مريب وأنت متهم في أخطر قضية بتاريخ زالفورا؟', opts: [{ t: '«البريء لا يخاف الأسئلة يا سيد سيرو، الخوف لمن لديه ما يخفيه.»', ok: true }, { t: '«أوقف هذا الاستجواب السخيف حالاً!»', ok: false }] }
+        ];
+      }
+      return [
+        { q: 'المرة الثانية أمامي يا راين! تحليل كلارا نور أثبت أن الفاعل خبير بثغرات القانون الجنائي... ما ردك؟', opts: [{ t: '«التقارير الطبية كلها تثبت سكتات قلبية طبيعية، لا جريمة أصلاً!»', ok: state.intellect >= 30 }, { t: '«الإنترنت مليء بالمقالات القانونية.»', ok: false }] },
+        { q: 'الضابط ريكس هارون أمام باب منزلك الآن... ماذا سيجد في غرفتك؟', opts: [{ t: '«لن يجد سوى كتب القانون، وسأقاضيك على أي تفتيش بلا إذن!»', ok: state.roomLevel >= 1 || state.intellect >= 35 }, { t: '«لا يحق لأحد دخول غرفتي!»', ok: false }] },
+        { q: 'بصراحة تامة: هل تتمنى في داخلك موت مجرمي زالفورا؟', opts: [{ t: '«كرجل قانون أتمنى سقوط الفساد بالعدالة، لكنني لست من يوقف قلوبهم.»', ok: true }, { t: '«لا... بالطبع لا أتمنى ذلك.»', ok: false }] }
+      ];
+    }
+
+    function startInterrogation() {
+      AudioEngine.playAlarm();
+      const round = state.interrogationsSurvived + 1;
+      interr = { active: true, qIdx: 0, score: 0, time: 15, timer: null, qs: getInterrogationQuestions(round) };
+      const globalHunt = state.rulerMode && !state.writtenTargets.includes('g_vex');
+      document.getElementById('interr-portrait').innerHTML = getPortraitSVG(globalHunt ? 'vex' : 'siro');
+      document.getElementById('interr-speaker').textContent = globalHunt ? 'فِيكْس (رئيس التحالف الدولي):' : 'سِيرُو فَان (المحلل السلوكي):';
+      document.getElementById('interr-title').textContent = round === 1 ? '🚨 غرفة الاستجواب (الأول) — المواجهة الحاسمة' : `🚨 غرفة الاستجواب رقم ${round} (أسئلة أخبث!)`;
+
+      document.getElementById('interr-questions-view').classList.remove('hidden');
+      document.getElementById('interr-polygraph-view').classList.add('hidden');
+      document.getElementById('screen-interrogation').classList.remove('hidden');
+      renderInterrQuestion();
+    }
+
+    function renderInterrQuestion() {
+      clearInterval(interr.timer);
+      const q = interr.qs[interr.qIdx];
+      document.getElementById('interr-progress').textContent = `السؤال ${interr.qIdx + 1} / ${interr.qs.length}`;
+      document.getElementById('interr-score').textContent = `${interr.score} / ${interr.qs.length}`;
+      document.getElementById('interr-question').textContent = q.q;
+
+      const box = document.getElementById('interr-options');
+      box.innerHTML = '';
+      q.opts.forEach(o => {
+        const b = document.createElement('button');
+        b.className = 'btn-dark text-right p-3 rounded-xl text-xs sm:text-sm font-bold text-slate-100';
+        b.textContent = o.t;
+        b.onclick = () => submitInterrAns(o.ok, 'رد مباشر');
+        box.appendChild(b);
+      });
+
+      // Alibi & Advanced Defense Skills
+      if (state.alibis.family > 0) addSpecialInterrBtn(box, `🛡️ كارت حجة غياب: شهادة العيلة (متبقي ${state.alibis.family})`, 'bg-sky-950/80 border-sky-500/70 text-sky-200', () => { state.alibis.family--; submitInterrAns(true, 'شهادة العيلة'); });
+      else if (state.alibis.arthur > 0) addSpecialInterrBtn(box, `🎥 كارت حجة غياب: كاميرات كافيه آرثر (متبقي ${state.alibis.arthur})`, 'bg-amber-950/80 border-amber-500/70 text-amber-200', () => { state.alibis.arthur--; submitInterrAns(true, 'كاميرات آرثر'); });
+      else if (state.alibis.lucas > 0) addSpecialInterrBtn(box, `💻 كارت حجة غياب: سجل لوكاس الرقمي (متبقي ${state.alibis.lucas})`, 'bg-emerald-950/80 border-emerald-500/70 text-emerald-200', () => { state.alibis.lucas--; submitInterrAns(true, 'الدليل الرقمي'); });
+
+      if (state.intellect >= 35 || state.interrogationsSurvived >= 1) addSpecialInterrBtn(box, '⚖️ مهارة «قلب الطاولة»: اتهام المحقق بالمراقبة غير القانونية!', 'bg-purple-950/80 border-purple-500/70 text-purple-200', () => submitInterrAns(true, 'قلب الطاولة'));
+      if ((state.alibis.family + state.alibis.arthur + state.alibis.lucas) >= 2) addSpecialInterrBtn(box, '🧩 مهارة «الدليل المزدوج»: دمج حجتي غياب لإغلاق كل ثغرة!', 'bg-indigo-950/80 border-indigo-400/70 text-indigo-200', () => submitInterrAns(true, 'الدليل المزدوج'));
+      if (state.humanity <= 40) addSpecialInterrBtn(box, '❄️ مهارة «البرود التام»: نبض ثابت تماماً بلا أي توتر!', 'bg-red-950/80 border-red-500/70 text-red-200', () => submitInterrAns(true, 'البرود التام'));
+
+      interr.time = 15;
+      updateInterrTimer();
+      interr.timer = setInterval(() => {
+        interr.time--;
+        updateInterrTimer();
+        if (interr.time <= 0) { clearInterval(interr.timer); submitInterrAns(false, 'انتهى الوقت'); }
+      }, 1000);
+    }
+
+    function addSpecialInterrBtn(box, label, cls, fn) {
+      const b = document.createElement('button');
+      b.className = `${cls} border text-right p-3 rounded-xl text-xs sm:text-sm font-extrabold transition hover:brightness-110`;
+      b.textContent = label;
+      b.onclick = fn;
+      box.appendChild(b);
+    }
+
+    function updateInterrTimer() {
+      document.getElementById('interr-timer').textContent = interr.time + ' ث';
+      document.getElementById('interr-timer-bar').style.width = (interr.time / 15 * 100) + '%';
+    }
+
+    function submitInterrAns(ok, label) {
+      clearInterval(interr.timer);
+      AudioEngine.playClick();
+      if (ok) { interr.score++; showToast(`✓ رد مقنع (${label})!`, 'success'); }
+      else { showToast(`✗ رد ضعيف (${label})!`, 'danger'); }
+      interr.qIdx++;
+      if (interr.qIdx < interr.qs.length) renderInterrQuestion();
+      else startHeartbeatMiniGame();
+    }
+
+    // Mini-Game 2: Polygraph Heartbeat Stabilizer
+    function startHeartbeatMiniGame() {
+      document.getElementById('interr-questions-view').classList.add('hidden');
+      document.getElementById('interr-polygraph-view').classList.remove('hidden');
+      document.getElementById('interr-progress').textContent = 'جهاز كشف الكذب';
+      document.getElementById('interr-timer').textContent = '7 ث';
+
+      hb = { active: true, pos: 40, calmTicks: 0, totalTicks: 0, time: 7.0, loop: null };
+      const drift = state.humanity <= 40 ? 0.55 : 0.92; // Cold humanity = steadier pulse!
+
+      hb.loop = setInterval(() => {
+        hb.pos = Math.min(94, hb.pos + drift + Math.random() * 0.65);
+        hb.totalTicks++;
+        if (hb.pos >= 22 && hb.pos <= 58) hb.calmTicks++;
+        hb.time = Math.max(0, hb.time - 0.05);
+
+        const pct = Math.round((hb.calmTicks / Math.max(1, hb.totalTicks)) * 100);
+        document.getElementById('hb-needle').style.left = hb.pos + '%';
+        document.getElementById('hb-calm-pct').textContent = pct + '%';
+        document.getElementById('hb-time-left').textContent = hb.time.toFixed(1);
+        document.getElementById('interr-timer-bar').style.width = (hb.time / 7 * 100) + '%';
+
+        if (hb.time <= 0) {
+          clearInterval(hb.loop);
+          hb.active = false;
+          finishInterrogation(pct >= 50);
+        }
+      }, 50);
+    }
+
+    function calmHeartbeatPulse(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      if (!hb.active) return;
+      AudioEngine.playClick();
+      hb.pos = Math.max(14, hb.pos - 10.5);
+      document.getElementById('hb-needle').style.left = hb.pos + '%';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space' && hb.active) {
+        e.preventDefault();
+        calmHeartbeatPulse();
+      }
+    });
+
+    function finishInterrogation(passedPolygraph) {
+      interr.active = false;
+      document.getElementById('screen-interrogation').classList.add('hidden');
+      if (interr.score >= 2 && passedPolygraph) {
+        state.interrogationsSurvived++;
+        state.suspicion = 40;
+        state.intellect += 12;
+        state.points += 25;
+        state.newsLog.unshift('تطورات التحقيق: الإفراج عن راين كاليد لعدم كفاية الأدلة وسط دهشة سيرو فان!');
+        state.conscienceMsg = 'خرجت بريئاً وثابت النبض كالشعرة من العجين يا راين! لكن المرة القادمة ستكون أخبث.';
+        unlockAchievement('survivor');
+        saveAuto(); updateAllUI();
+        showToast('🎉 نجوت من الاستجواب وكشف الكذب ببراءة! انخفض الشك إلى 40%.', 'success');
+      } else {
+        saveAuto();
+        triggerEnding('arrested');
+      }
+    }
+
+    /* ==========================================================
+       18. MULTIPLE ENDINGS & NEW WORLD RULER MODE
+       ========================================================== */
+    function confirmBurnNotebook() {
+      openModal('🔥 التوبة وحرق المفكرة', 'هل تريد حرق المفكرة الآن والانتقال لنهاية «التضحية والتوبة»؟ (يمكنك بعدها العودة لعصر حاكم العالم الجديد).', [
+        { label: 'تراجع', primary: false },
+        { label: 'حرق المفكرة الآن', primary: true, onClick: () => triggerEnding('redemption') }
+      ]);
+    }
+
+    function triggerEnding(type) {
+      const ic = document.getElementById('ending-icon');
+      const tg = document.getElementById('ending-tag');
+      const ti = document.getElementById('ending-title');
+      const ds = document.getElementById('ending-desc');
+
+      if (type === 'shadow_ruler') {
+        ic.textContent = '👑'; tg.textContent = 'النهاية الأولى — الانتصار المطلق'; ti.textContent = 'حاكم الظل في زالفورا';
+        ds.textContent = 'بسقوط السيناتور فُورْس، خضعت زالفورا بالكامل لقلمك. خدعت سيرو فان وأمّنت غرفتك كالشبح... والآن ينتظرك العالم بأسره!';
+      } else if (type === 'arrested') {
+        ic.textContent = '⛓️'; tg.textContent = 'النهاية الثانية — السقوط المؤقت'; ti.textContent = 'خلف قضبان زالفورا';
+        ds.textContent = 'نجح سيرو فان أخيراً في إيقاعك بفخ الاستجواب. لكن عقلاً بذكائك لا يُهزم... ورقة واحدة مخبأة في معطفك كافية للعودة والانتقام كحاكم للعالم الجديد!';
+      } else {
+        ic.textContent = '🔥'; tg.textContent = 'النهاية الثالثة — التضحية السرية'; ti.textContent = 'رماد المفكرة وبداية جديدة';
+        ds.textContent = 'أحرقت المفكرة قبل أن تبتلع ما تبقى من إنسانيتك. عادت حياتك هادئة مع عائلتك... لكنك تعلم أن الظل لا يختفي للأبد ويمكنك استدعاء القوة مجدداً.';
+      }
+
+      document.getElementById('ending-stats').innerHTML = `
+        <div><div class="text-slate-400 mb-1">الأسماء المكتوبة</div><div class="text-lg font-black text-red-400">${state.archive.length}</div></div>
+        <div><div class="text-slate-400 mb-1">الذكاء والتمويه</div><div class="text-lg font-black text-emerald-400">${state.intellect}</div></div>
+        <div><div class="text-slate-400 mb-1">الأوسمة المفتوحة</div><div class="text-lg font-black text-amber-300">${state.achievements.length}/${ACHIEVEMENTS.length}</div></div>
+      `;
+
+      saveAuto();
+      document.getElementById('screen-hub').classList.add('hidden');
+      document.getElementById('screen-ending').classList.remove('hidden');
+    }
+
+    function enterNewWorldRulerMode() {
+      AudioEngine.playNewsChime();
+      state.rulerMode = true;
+      state.suspicion = 20;
+      state.intellect += 20;
+      state.points += 80;
+      state.alibis.family += 2;
+      state.alibis.arthur += 2;
+      state.alibis.lucas += 2;
+      BASE_TARGETS.filter(t => t.isGlobal).forEach(t => unlockTarget(t.id));
+      state.newsLog.unshift('👑 عاجل عالمياً: ظهور «حاكم زالفورا» على الساحة الدولية... والتحالف الدولي يرسل المطارد فِيكْس!');
+      state.conscienceMsg = 'عدتَ أقوى من أي وقت مضى! العالم كله الآن صفحتك، وشبكة الأتباع السريين بانتظار أوامرك.';
+      unlockAchievement('ruler_era');
+      saveAuto();
+      enterHub();
+      showToast('👑 مرحباً بك في عصر حاكم العالم الجديد! فُتح 12 هدفاً عالمياً وشبكة الأتباع.', 'warning');
+    }
+
+    function confirmResetGame() {
+      AudioEngine.playClick();
+      openModal('🔄 إعادة تشغيل اللعبة', 'هل تريد بدء قصة جديدة من البداية؟ (خانات الحفظ الـ 3 المحفوظة في 💾 لن تُمسح).', [
+        { label: 'إلغاء', primary: false },
+        { label: 'نعم، ابدأ من جديد', primary: true, onClick: resetGameConfirmed }
+      ]);
+    }
+
+    function resetGameConfirmed() {
+      AudioEngine.playClick();
+      clearInterval(cdTimer); clearInterval(interr.timer); clearInterval(hb.loop); clearInterval(cctv.loop); clearInterval(cctv.timer);
+      state = getDefaultState();
+      state.welcomeSeen = true;
+      saveAuto();
+      document.getElementById('screen-hub').classList.add('hidden');
+      document.getElementById('screen-ending').classList.add('hidden');
+      document.getElementById('screen-interrogation').classList.add('hidden');
+      document.getElementById('screen-intro').classList.remove('hidden');
+      introIdx = 0;
+      renderIntro(0);
+    }
+
+    /* ==========================================================
+       19. CLEAN INITIALIZATION ON DOMContentLoaded
+       ========================================================== */
+    document.addEventListener('DOMContentLoaded', () => {
+      initRainCanvas();
+      loadAuto();
+      if (state.introDone) {
+        enterHub();
+      } else {
+        renderIntro(0);
+      }
+      if (!state.welcomeSeen) {
+        openWelcomeModal(false);
+      }
+    });
+  </script>
+</body>
+</html>

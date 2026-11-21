@@ -1,0 +1,48 @@
+<!-- =========================================
+     1) ضع هذا الجزء داخل وسم <head> في ملف index.html
+     ========================================= -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#8b0000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="زالفورا">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+
+<!-- =========================================
+     2) ضع هذا الجزء قبل قفلة </body> مباشرة في ملف index.html
+     ========================================= -->
+<button id="pwa-install-btn" style="
+  display:none; position:fixed; bottom:18px; left:18px; z-index:9999;
+  background:#8b0000; color:#fff; border:1px solid #ff4d4d;
+  padding:10px 16px; border-radius:10px; font-family:inherit;
+  font-weight:bold; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.6);">
+  📲 ثبّت زالفورا على جهازك
+</button>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('Zalvora PWA Ready'))
+        .catch((err) => console.error('SW Error:', err));
+    });
+  }
+
+  let deferredPrompt;
+  const installBtn = document.getElementById('pwa-install-btn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+</script>
