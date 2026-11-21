@@ -2955,5 +2955,39 @@
       }
     });
   </script>
+  <button id="pwa-install-btn" style="
+  display:none; position:fixed; bottom:18px; left:18px; z-index:9999;
+  background:#8b0000; color:#fff; border:1px solid #ff4d4d;
+  padding:10px 16px; border-radius:10px; font-family:inherit;
+  font-weight:bold; cursor:pointer; box-shadow:0 4px 15px rgba(0,0,0,0.6);">
+  📲 ثبّت زالفورا على جهازك
+</button>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('Zalvora PWA Ready'))
+        .catch((err) => console.error('SW Error:', err));
+    });
+  }
+
+  let deferredPrompt;
+  const installBtn = document.getElementById('pwa-install-btn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'block';
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+</script>
 </body>
 </html>
